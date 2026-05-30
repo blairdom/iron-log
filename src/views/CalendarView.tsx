@@ -1,82 +1,93 @@
 import { useApp } from "../store/AppStore";
 import { FONT, screen, card } from "../components/theme";
-import type { SessionRecord } from "../engine/types";
 
 function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();
 }
 
 function getFirstDayOfMonth(year: number, month: number): number {
-  // Returns 0=Sun, shift to Mon-based: Mon=0
   const day = new Date(year, month, 1).getDay();
   return (day + 6) % 7; // Mon=0, Sun=6
 }
 
+const STATUS_COLORS = {
+  complete: { bg: "rgba(34,197,94,0.2)",  border: "#1a3a1a", color: "#22c55e" },
+  partial:  { bg: "rgba(234,179,8,0.15)", border: "#3a3210", color: "#eab308" },
+  skipped:  { bg: "rgba(239,68,68,0.15)", border: "#3a1010", color: "#ef4444" },
+  none:     { bg: "#111",                 border: "#1a1a1a", color: "#555"    },
+  future:   { bg: "#0e0e0e",              border: "#111",    color: "#333"    },
+};
+
+const CARDIO_DOT_COLORS: Record<string, string> = {
+  complete: "#22c55e",
+  skipped:  "#ef4444",
+  none:     "#1a1a1a",
+};
+
 export default function CalendarView() {
   const { state } = useApp();
-  const { sessions, adherenceRecords, today } = state;
+  const { sessions, cardioSessions, today } = state;
 
-  const now = new Date(today);
+  const now = new Date(today + "T12:00:00");
   const year = now.getFullYear();
   const month = now.getMonth();
-
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfMonth(year, month);
-
-  const headers = ["M", "T", "W", "T", "F", "S", "S"];
   const monthLabel = now.toLocaleString("default", { month: "long", year: "numeric" }).toUpperCase();
 
-  function getStatusForDay(day: number): string | null {
-    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    const session = sessions.find(s => s.date === dateStr);
-    if (!session) return null;
-    return session.status;
+  const headers = ["M", "T", "W", "T", "F", "S", "S"];
+
+  function dateStr(day: number): string {
+    return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
   }
 
-  function calDayStyle(status: string | null): React.CSSProperties {
-    const colors: Record<string, { bg: string; border: string; color: string }> = {
-      complete: { bg: "rgba(34,197,94,0.2)", border: "#1a3a1a", color: "#22c55e" },
-      partial: { bg: "rgba(234,179,8,0.15)", border: "#3a3210", color: "#eab308" },
-      skipped: { bg: "rgba(239,68,68,0.15)", border: "#3a1010", color: "#ef4444" },
-      not_started: { bg: "#111", border: "#1a1a1a", color: "#444" },
-    };
-    const c = colors[status ?? ""] ?? { bg: "#111", border: "#1a1a1a", color: "#555" };
-    return {
-      aspectRatio: "1",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      background: c.bg,
-      border: `1px solid ${c.border}`,
-      borderRadius: 4,
-      color: c.color,
-      fontSize: 12,
-      fontWeight: 600,
-      fontFamily: FONT,
-    };
+  function getStrengthStatus(day: number): keyof typeof STATUS_COLORS {
+    const d = dateStr(day);
+    if (d > today) return "future";
+    const s = sessions.find(s => s.date === d);
+    if (!s) return "none";
+    if (s.status === "complete") return "complete";
+    if (s.status === "partial") return "partial";
+    if (s.status === "skipped") return "skipped";
+    return "none";
   }
 
-  // Weekly summary for the current week
-  const weekSessions = sessions.filter(s => {
-    const d = new Date(s.date);
-    const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - ((now.getDay() + 6) % 7)); // Monday
-    weekStart.setHours(0, 0, 0, 0);
-    return d >= weekStart && d <= now;
-  });
+  function getCardioStatus(day: number): "complete" | "skipped" | "none" {
+    const d = dateStr(day);
+    if (d > today) return "none";
+    const s = cardioSessions.find(s => s.date === d);
+    if (!s) return "none";
+    if (s.status === "complete") return "complete";
+    if (s.status === "skipped") return "skipped";
+    return "none";
+  }
 
-  const scheduled = adherenceRecords.filter(r => {
-    const d = new Date(r.date);
-    const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-    weekStart.setHours(0, 0, 0, 0);
-    return d >= weekStart && d <= now && r.scheduled;
-  }).length;
+  // Weekly summary for current week (Mon–today)
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  weekStart.setHours(0, 0, 0, 0);
+  const weekStartStr = weekStart.toISOString().split("T")[0];
 
-  const completed = weekSessions.filter(s => s.status === "complete").length;
-  const partial = weekSessions.filter(s => s.status === "partial").length;
-  const skipped = weekSessions.filter(s => s.status === "skipped").length;
-  const adherence = scheduled > 0 ? Math.round(((completed * 1.0 + partial * 0.5) / scheduled) * 100) : 0;
+  const weekSessions = sessions.filter(s => s.date >= weekStartStr && s.date <= today);
+  const weekCardio = cardioSessions.filter(s => s.date >= weekStartStr && s.date <= today);
+
+  const strengthScheduled = weekSessions.filter(s =>
+    ["mon","tue","wed","thu","fri"].includes(s.dayKey)
+  ).length;
+  const strengthCompleted = weekSessions.filter(s => s.status === "complete").length;
+  const strengthPartial   = weekSessions.filter(s => s.status === "partial").length;
+  const strengthSkipped   = weekSessions.filter(s => s.status === "skipped").length;
+  const strengthAdherence = strengthScheduled > 0
+    ? Math.round(((strengthCompleted * 1.0 + strengthPartial * 0.5) / strengthScheduled) * 100)
+    : 0;
+
+  const cardioDone    = weekCardio.filter(s => s.status === "complete").length;
+  const cardioMissed  = weekCardio.filter(s => s.status === "skipped").length;
+  // Days elapsed this week so far
+  const daysElapsed = Math.min(7, Math.ceil((now.getTime() - weekStart.getTime()) / 86400000) + 1);
+  const cardioAdherence = daysElapsed > 0
+    ? Math.round((cardioDone / daysElapsed) * 100)
+    : 0;
 
   const cells: (number | null)[] = [
     ...Array(firstDay).fill(null),
@@ -86,44 +97,107 @@ export default function CalendarView() {
   return (
     <div style={screen(null)}>
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
         <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", color: "#666", textTransform: "uppercase", fontFamily: FONT }}>
           {monthLabel}
         </div>
-        <div style={{ display: "flex", gap: 16, fontSize: 10, color: "#444", fontFamily: FONT }}>
-          <span style={{ color: "#22c55e" }}>■ Complete</span>
-          <span style={{ color: "#eab308" }}>■ Partial</span>
-          <span style={{ color: "#ef4444" }}>■ Skipped</span>
+        <div style={{ display: "flex", gap: 12, fontSize: 10, color: "#444", fontFamily: FONT }}>
+          <span><span style={{ color: "#22c55e" }}>■</span> Complete</span>
+          <span><span style={{ color: "#eab308" }}>■</span> Partial</span>
+          <span><span style={{ color: "#ef4444" }}>■</span> Skipped</span>
         </div>
       </div>
 
+      {/* Legend for dots */}
+      <div style={{ display: "flex", gap: 16, marginTop: 8, fontSize: 10, color: "#444", fontFamily: FONT }}>
+        <span>Strength = cell color</span>
+        <span>
+          <span style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", background: "#22c55e", verticalAlign: "middle", marginRight: 4 }} />
+          Cardio dot
+        </span>
+      </div>
+
       {/* Calendar Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginTop: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginTop: 12 }}>
         {headers.map((h, i) => (
           <div key={i} style={{ fontSize: 9, fontWeight: 700, color: "#444", textAlign: "center", padding: "4px 0 8px", letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: FONT }}>
             {h}
           </div>
         ))}
-        {cells.map((day, i) => (
-          <div key={i} style={calDayStyle(day ? getStatusForDay(day) : null)}>
-            {day ?? ""}
+        {cells.map((day, i) => {
+          if (!day) {
+            return <div key={i} style={{ aspectRatio: "1", background: "#0e0e0e", borderRadius: 4 }} />;
+          }
+          const sc = STATUS_COLORS[getStrengthStatus(day)];
+          const cardioStatus = getCardioStatus(day);
+          const dotColor = CARDIO_DOT_COLORS[cardioStatus];
+          const isFuture = dateStr(day) > today;
+
+          return (
+            <div
+              key={i}
+              style={{
+                aspectRatio: "1",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 3,
+                background: sc.bg,
+                border: `1px solid ${sc.border}`,
+                borderRadius: 4,
+                position: "relative",
+              }}
+            >
+              <span style={{ color: sc.color, fontSize: 11, fontWeight: 600, fontFamily: FONT, lineHeight: 1 }}>
+                {day}
+              </span>
+              {/* Cardio dot — only show for past/today */}
+              {!isFuture && (
+                <div style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: "50%",
+                  background: dotColor,
+                  opacity: cardioStatus === "none" ? 0.3 : 1,
+                }} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Strength Weekly Summary */}
+      <div style={{ ...card, marginTop: 20 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#666", padding: "0 0 10px", borderBottom: "1px solid #222", fontFamily: FONT }}>
+          Strength — This Week
+        </div>
+        {[
+          { label: "Scheduled",  value: String(strengthScheduled),   highlight: false },
+          { label: "Completed",  value: String(strengthCompleted),   highlight: false },
+          { label: "Partial",    value: String(strengthPartial),     highlight: false },
+          { label: "Skipped",    value: String(strengthSkipped),     highlight: strengthSkipped > 0 },
+          { label: "Adherence",  value: `${strengthAdherence}%`,     highlight: false },
+        ].map(row => (
+          <div key={row.label} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "1px solid #111", fontSize: 12, fontFamily: FONT }}>
+            <span style={{ color: "#666" }}>{row.label}</span>
+            <span style={{ color: row.highlight ? "#ef4444" : "#e0e0e0", fontWeight: 600 }}>{row.value}</span>
           </div>
         ))}
       </div>
 
-      {/* Weekly Summary */}
-      <div style={{ ...card, marginTop: 20 }}>
-        <div style={{ background: "#141414", fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#666", padding: "12px 0 8px", borderBottom: "1px solid #222", fontFamily: FONT }}>
-          This Week
+      {/* Cardio Weekly Summary */}
+      <div style={{ ...card, marginTop: 12, marginBottom: 32 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#666", padding: "0 0 10px", borderBottom: "1px solid #222", fontFamily: FONT }}>
+          Cardio — This Week
         </div>
         {[
-          { label: "Scheduled", value: String(scheduled), highlight: false },
-          { label: "Completed", value: String(completed), highlight: false },
-          { label: "Partial", value: String(partial), highlight: false },
-          { label: "Skipped", value: String(skipped), highlight: skipped > 0 },
-          { label: "Adherence", value: `${adherence}%`, highlight: false },
+          { label: "Days completed", value: String(cardioDone),       highlight: false },
+          { label: "Days missed",    value: String(cardioMissed),     highlight: cardioMissed > 0 },
+          { label: "Days elapsed",   value: String(daysElapsed),      highlight: false },
+          { label: "Adherence",      value: `${cardioAdherence}%`,   highlight: false },
         ].map(row => (
-          <div key={row.label} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #111", fontSize: 12, fontFamily: FONT }}>
+          <div key={row.label} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "1px solid #111", fontSize: 12, fontFamily: FONT }}>
             <span style={{ color: "#666" }}>{row.label}</span>
             <span style={{ color: row.highlight ? "#ef4444" : "#e0e0e0", fontWeight: 600 }}>{row.value}</span>
           </div>
@@ -132,5 +206,3 @@ export default function CalendarView() {
     </div>
   );
 }
-
-import type React from "react";
