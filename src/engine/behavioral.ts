@@ -1,4 +1,4 @@
-import type { ThreatState, SessionRecord, AdherenceRecord, BehavioralState, RecoveryModeRecord } from "./types";
+import type { ThreatState, SessionRecord, AdherenceRecord, BehavioralState, RecoveryModeRecord, CardioSession, CardioBehavioralState } from "./types";
 
 const CREDITS_PER_LEVEL = 2.0;
 const FREEZE_THRESHOLD = 1.0;
@@ -188,4 +188,52 @@ export function checkRecoveryModeAutoExit(
 ): boolean {
   return recoveryMode.active &&
     recoveryMode.consecutiveCompletedDuringRecovery >= RECOVERY_EXIT_SESSIONS;
+}
+
+// ─── Cardio Behavioral Engine ───────────────────────────────────────────────
+
+export function computeCardioBehavioralState(
+  sessions: CardioSession[],
+  today: string
+): CardioBehavioralState {
+  const sorted = [...sessions].sort((a, b) => b.date.localeCompare(a.date));
+
+  // Streak: consecutive completed days going backward from most recent
+  let streak = 0;
+  for (const s of sorted) {
+    if (s.date > today) continue; // ignore future
+    if (s.status === "complete") streak++;
+    else break;
+  }
+
+  // Rolling 7-day adherence
+  const windowStart = dateSubDays(today, 6);
+  const window = sorted.filter(s => s.date >= windowStart && s.date <= today);
+  // Cardio is scheduled every day — 7 days in window
+  const windowDays = 7;
+  const completed = window.filter(s => s.status === "complete").length;
+  const adherenceRate = completed / windowDays;
+
+  // Threat: based on consecutive skips in rolling window
+  const windowSkips = window.filter(s => s.status === "skipped").length;
+  let threatState: ThreatState;
+  if (windowSkips === 0) threatState = "green";
+  else if (windowSkips === 1) threatState = "yellow";
+  else if (windowSkips === 2) threatState = "orange";
+  else threatState = "red";
+
+  const todaySession = sessions.find(s => s.date === today);
+  const todayStatus = todaySession?.status ?? "not_started";
+
+  return { threatState, streak, adherenceRate, todayStatus };
+}
+
+export function computeCardioWeeklyMinutes(
+  sessions: CardioSession[],
+  weekStart: string
+): number {
+  const weekEnd = dateSubDays(weekStart, -6);
+  return sessions
+    .filter(s => s.date >= weekStart && s.date <= weekEnd && s.status === "complete")
+    .reduce((sum, s) => sum + s.duration, 0);
 }

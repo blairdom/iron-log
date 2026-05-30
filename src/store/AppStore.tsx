@@ -1,16 +1,16 @@
-import React, { createContext, useContext, useReducer, useEffect, useCallback } from "react";
-import type { SessionRecord, AdherenceRecord, RecoveryModeRecord, PlannedAbsence, GoalRecord, BehavioralState, SetRecord, SalvageType } from "../engine/types";
+import React, { createContext, useContext, useReducer } from "react";
+import type { SessionRecord, AdherenceRecord, RecoveryModeRecord, PlannedAbsence, GoalRecord, BehavioralState, SetRecord, SalvageType, CardioSession, CardioBehavioralState } from "../engine/types";
 import type { DayTemplate } from "../data/program";
 import {
   loadSessions, saveSessions,
   loadAdherence, saveAdherence,
   loadRecoveryMode, saveRecoveryMode,
-  loadAbsences, saveAbsences,
-  loadGoals, saveGoals,
   loadProgram, saveProgram,
+  loadCardioSessions, saveCardioSessions,
 } from "./storage";
 import {
-  computeBehavioralState, toDateString, getTodayKey, adherenceValue, isScheduledDay
+  computeBehavioralState, toDateString, getTodayKey, adherenceValue, isScheduledDay,
+  computeCardioBehavioralState,
 } from "../engine/behavioral";
 import { getExerciseById } from "../data/exercises";
 
@@ -23,6 +23,9 @@ interface AppState {
   program: DayTemplate[];
   activeSession: SessionRecord | null;
   behavioral: BehavioralState;
+  cardioSessions: CardioSession[];
+  cardioBehavioral: CardioBehavioralState;
+  activeCardioSession: CardioSession | null;
   today: string;
   todayKey: string;
 }
@@ -44,6 +47,9 @@ type Action =
   | { type: "REMOVE_SLOT"; dayKey: string; sectionId: string; slotId: string }
   | { type: "ADD_SECTION"; dayKey: string }
   | { type: "REMOVE_SECTION"; dayKey: string; sectionId: string }
+  | { type: "START_CARDIO_SESSION" }
+  | { type: "UPDATE_CARDIO_FIELD"; field: "duration" | "speed"; value: number }
+  | { type: "COMPLETE_CARDIO_SESSION" }
 
 const now = new Date();
 
@@ -391,6 +397,44 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, program };
     }
 
+    case "START_CARDIO_SESSION": {
+      const today = toDateString();
+      const existing = state.cardioSessions.find(s => s.date === today);
+      const activeCardioSession: CardioSession = existing ?? {
+        id: `cardio-${today}`,
+        date: today,
+        duration: 20,
+        speed: 3.5,
+        status: "not_started",
+        completedAt: null,
+      };
+      return { ...state, activeCardioSession };
+    }
+
+    case "UPDATE_CARDIO_FIELD": {
+      if (!state.activeCardioSession) return state;
+      return {
+        ...state,
+        activeCardioSession: { ...state.activeCardioSession, [action.field]: action.value },
+      };
+    }
+
+    case "COMPLETE_CARDIO_SESSION": {
+      if (!state.activeCardioSession) return state;
+      const completed: CardioSession = {
+        ...state.activeCardioSession,
+        status: "complete",
+        completedAt: new Date().toISOString(),
+      };
+      const cardioSessions = [
+        ...state.cardioSessions.filter(s => s.date !== completed.date),
+        completed,
+      ];
+      saveCardioSessions(cardioSessions);
+      const cardioBehavioral = computeCardioBehavioralState(cardioSessions, state.today);
+      return { ...state, cardioSessions, cardioBehavioral, activeCardioSession: null };
+    }
+
     default:
       return state;
   }
@@ -410,20 +454,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const sessions = loadSessions();
   const adherenceRecords = loadAdherence();
   const recoveryMode = loadRecoveryMode();
-  const absences = loadAbsences();
-  const goals = loadGoals();
   const program = loadProgram();
-  const behavioral = computeBehavioralState(sessions, adherenceRecords, recoveryMode, goals, today);
+  const behavioral = computeBehavioralState(sessions, adherenceRecords, recoveryMode, [], today);
+  const cardioSessions = loadCardioSessions();
+  const cardioBehavioral = computeCardioBehavioralState(cardioSessions, today);
 
   const [state, dispatch] = useReducer(reducer, {
     sessions,
     adherenceRecords,
     recoveryMode,
-    absences,
-    goals,
+    absences: [],
+    goals: [],
     program,
     activeSession: null,
     behavioral,
+    cardioSessions,
+    cardioBehavioral,
+    activeCardioSession: null,
     today,
     todayKey,
   });

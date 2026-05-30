@@ -1,25 +1,24 @@
 import { useApp } from "../store/AppStore";
 import { THREAT_COLORS, FONT, screen, card, label } from "../components/theme";
 import { threatLabel, threatMessage } from "../engine/behavioral";
-import type { ThreatState } from "../engine/types";
 
 interface Props {
   onStartSession: () => void;
+  onLogCardio: () => void;
 }
 
-export default function Dashboard({ onStartSession }: Props) {
+export default function Dashboard({ onStartSession, onLogCardio }: Props) {
   const { state, dispatch } = useApp();
-  const { behavioral, program, sessions, todayKey, today } = state;
+  const { behavioral, cardioBehavioral, program, sessions, todayKey, today } = state;
   const { threatState, streak, adherenceRate, recoveryMode } = behavioral;
   const tc = THREAT_COLORS[threatState];
+  const cardioTc = THREAT_COLORS[cardioBehavioral.threatState];
 
   const todayDay = program.find(d => d.key === todayKey);
   const todaySession = sessions.find(s => s.date === today && s.dayKey === todayKey);
   const sessionStatus = todaySession?.status ?? "not_started";
 
   const exerciseCount = todayDay?.sections.reduce((a, s) => a + s.slots.length, 0) ?? 0;
-
-  const activeGoal = state.goals.find(g => g.status === "active");
 
   const adherencePct = Math.round(adherenceRate * 100);
 
@@ -31,6 +30,11 @@ export default function Dashboard({ onStartSession }: Props) {
   }
 
   const badge = statusBadge();
+
+  const cardioStatusColor = cardioBehavioral.todayStatus === "complete" ? "#22c55e"
+    : cardioBehavioral.todayStatus === "skipped" ? "#ef4444" : "#555";
+  const cardioStatusLabel = cardioBehavioral.todayStatus === "complete" ? "DONE"
+    : cardioBehavioral.todayStatus === "skipped" ? "MISSED" : "PENDING";
 
   return (
     <div style={screen(threatState)}>
@@ -108,6 +112,61 @@ export default function Dashboard({ onStartSession }: Props) {
         </button>
       )}
 
+      {/* ── Cardio Consistency Card ── */}
+      <div style={{ ...card, marginTop: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <div style={{ fontSize: 11, color: "#666", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600, fontFamily: FONT }}>
+              Cardio Streak
+            </div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: "#fff", marginTop: 4, fontFamily: FONT }}>
+              {cardioBehavioral.streak} days
+            </div>
+            <div style={{ fontSize: 11, color: "#444", marginTop: 2, fontFamily: FONT }}>
+              {66 - cardioBehavioral.streak > 0
+                ? `${66 - cardioBehavioral.streak} days to habit lock`
+                : "LOCKED IN — habit formed"}
+            </div>
+          </div>
+          <div style={{
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.1em",
+            color: cardioStatusColor,
+            background: cardioBehavioral.todayStatus === "complete" ? "rgba(34,197,94,0.1)" : "#111",
+            border: `1px solid ${cardioBehavioral.todayStatus === "complete" ? "#1a3a1a" : "#222"}`,
+            padding: "4px 10px",
+            borderRadius: 3,
+            fontFamily: FONT,
+          }}>
+            {cardioStatusLabel}
+          </div>
+        </div>
+
+        {cardioBehavioral.todayStatus !== "complete" && (
+          <button
+            style={{
+              width: "100%",
+              padding: 12,
+              background: cardioTc.glow,
+              border: `1px solid ${cardioTc.border}`,
+              borderRadius: 6,
+              color: cardioTc.accent,
+              fontSize: 13,
+              fontWeight: 700,
+              fontFamily: FONT,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              cursor: "pointer",
+              marginTop: 12,
+            }}
+            onClick={onLogCardio}
+          >
+            ▶ LOG CARDIO
+          </button>
+        )}
+      </div>
+
       {/* Recovery Mode Controls */}
       {recoveryMode.active ? (
         <button
@@ -124,7 +183,7 @@ export default function Dashboard({ onStartSession }: Props) {
             letterSpacing: "0.1em",
             textTransform: "uppercase",
             cursor: "pointer",
-            marginTop: 20,
+            marginTop: 16,
           }}
           onClick={() => dispatch({ type: "EXIT_RECOVERY_MODE" })}
         >
@@ -157,35 +216,15 @@ export default function Dashboard({ onStartSession }: Props) {
       <div style={{ display: "flex", gap: 24, marginTop: 20 }}>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 24, fontWeight: 700, color: "#fff", fontFamily: FONT }}>{streak}</div>
-          <div style={label}>Day Streak</div>
+          <div style={label}>Strength Streak</div>
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 24, fontWeight: 700, color: "#fff", fontFamily: FONT }}>
-            {Math.floor(streak / 5)}w
+            {Math.round(cardioBehavioral.adherenceRate * 100)}%
           </div>
-          <div style={label}>Current Run</div>
+          <div style={label}>Cardio 7-Day</div>
         </div>
       </div>
-
-      {/* Current Goal */}
-      {activeGoal && (
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          marginTop: 16,
-          padding: "12px 16px",
-          background: "#111",
-          border: "1px solid #1a1a1a",
-          borderRadius: 4,
-        }}>
-          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", flexShrink: 0 }} />
-          <div style={{ fontSize: 12, color: "#888", fontFamily: FONT }}>{activeGoal.label}</div>
-          <div style={{ marginLeft: "auto", fontSize: 12, color: "#e0e0e0", fontWeight: 700, fontFamily: FONT }}>
-            {activeGoal.progressValue} / {activeGoal.targetValue}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

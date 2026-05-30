@@ -1,4 +1,4 @@
-import type { SessionRecord, AdherenceRecord, RecoveryModeRecord, PlannedAbsence, GoalRecord } from "../engine/types";
+import type { SessionRecord, AdherenceRecord, RecoveryModeRecord, PlannedAbsence, GoalRecord, CardioSession } from "../engine/types";
 import type { DayTemplate } from "../data/program";
 import { DEFAULT_PROGRAM } from "../data/program";
 
@@ -9,6 +9,7 @@ const KEYS = {
   absences: "ironlog_absences",
   goals: "ironlog_goals",
   program: "ironlog_program",
+  cardio: "ironlog_cardio",
 };
 
 function load<T>(key: string, fallback: T): T {
@@ -81,6 +82,24 @@ export function loadProgram(): DayTemplate[] {
 export function saveProgram(program: DayTemplate[]): void {
   save(KEYS.program, program);
 }
+
+export function loadCardioSessions(): CardioSession[] {
+  return load<CardioSession[]>(KEYS.cardio, SEED_CARDIO);
+}
+
+export function saveCardioSessions(sessions: CardioSession[]): void {
+  save(KEYS.cardio, sessions);
+}
+
+// Seed data: May 25–30 completed, May 31 not yet started
+const SEED_CARDIO: CardioSession[] = [
+  { id: "cardio-2026-05-25", date: "2026-05-25", duration: 20, speed: 3.5, status: "complete", completedAt: "2026-05-25T00:00:00.000Z" },
+  { id: "cardio-2026-05-26", date: "2026-05-26", duration: 20, speed: 3.5, status: "complete", completedAt: "2026-05-26T00:00:00.000Z" },
+  { id: "cardio-2026-05-27", date: "2026-05-27", duration: 20, speed: 3.5, status: "complete", completedAt: "2026-05-27T00:00:00.000Z" },
+  { id: "cardio-2026-05-28", date: "2026-05-28", duration: 20, speed: 3.5, status: "complete", completedAt: "2026-05-28T00:00:00.000Z" },
+  { id: "cardio-2026-05-29", date: "2026-05-29", duration: 20, speed: 3.5, status: "complete", completedAt: "2026-05-29T00:00:00.000Z" },
+  { id: "cardio-2026-05-30", date: "2026-05-30", duration: 20, speed: 3.5, status: "complete", completedAt: "2026-05-30T00:00:00.000Z" },
+];
 
 const DEFAULT_GOALS: GoalRecord[] = [
   { id: "t1-m1", tier: 1, label: "3 sessions this week", status: "active", achievedDate: null, progressValue: 0, targetValue: 3 },

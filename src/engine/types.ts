@@ -74,6 +74,22 @@ export interface GoalRecord {
   targetValue: number;
 }
 
+export interface CardioSession {
+  id: string;
+  date: string; // YYYY-MM-DD
+  duration: number; // minutes
+  speed: number;    // mph
+  status: "complete" | "skipped" | "not_started";
+  completedAt: string | null;
+}
+
+export interface CardioBehavioralState {
+  threatState: ThreatState;
+  streak: number;
+  adherenceRate: number;
+  todayStatus: "complete" | "skipped" | "not_started";
+}
+
 export interface BehavioralState {
   threatState: ThreatState;
   recoveryCredits: number;
