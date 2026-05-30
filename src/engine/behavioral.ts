@@ -91,9 +91,9 @@ export function computeBehavioralState(
   const recentSessions = sortedSessions.filter(s => isScheduledDay(s.dayKey)).reverse();
 
   for (const s of recentSessions) {
-    if (s.status === "skipped") break;
+    if (s.status === "skipped" || s.status === "not_started") break;
     if (!consecutiveRun) break;
-    credits += sessionCredit(s.status);
+    credits += sessionCredit(s.status as "complete" | "partial" | "skipped");
   }
 
   // Freeze: at 1.0 credits, stop further escalation (already handled by not adding skips after)

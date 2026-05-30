@@ -100,7 +100,7 @@ export default function SessionView({ onComplete, onBack }: Props) {
               }}
               onClick={() => handleSalvage(salvageActive === t ? null : t)}
             >
-              {t === "emergency" ? "10-MIN" : t.toUpperCase()}
+              {t === "emergency" ? "10-MIN" : t!.toUpperCase()}
             </button>
           ))}
         </div>
