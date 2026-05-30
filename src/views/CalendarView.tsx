@@ -18,11 +18,6 @@ const STATUS_COLORS = {
   future:   { bg: "#0e0e0e",              border: "#111",    color: "#333"    },
 };
 
-const CARDIO_DOT_COLORS: Record<string, string> = {
-  complete: "#22c55e",
-  skipped:  "#ef4444",
-  none:     "#1a1a1a",
-};
 
 export default function CalendarView() {
   const { state } = useApp();
@@ -108,13 +103,10 @@ export default function CalendarView() {
         </div>
       </div>
 
-      {/* Legend for dots */}
+      {/* Legend */}
       <div style={{ display: "flex", gap: 16, marginTop: 8, fontSize: 10, color: "#444", fontFamily: FONT }}>
-        <span>Strength = cell color</span>
-        <span>
-          <span style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", background: "#22c55e", verticalAlign: "middle", marginRight: 4 }} />
-          Cardio dot
-        </span>
+        <span>Top = Strength</span>
+        <span>Bottom = Cardio</span>
       </div>
 
       {/* Calendar Grid */}
@@ -128,10 +120,9 @@ export default function CalendarView() {
           if (!day) {
             return <div key={i} style={{ aspectRatio: "1", background: "#0e0e0e", borderRadius: 4 }} />;
           }
-          const sc = STATUS_COLORS[getStrengthStatus(day)];
-          const cardioStatus = getCardioStatus(day);
-          const dotColor = CARDIO_DOT_COLORS[cardioStatus];
           const isFuture = dateStr(day) > today;
+          const sc = STATUS_COLORS[getStrengthStatus(day)];
+          const cs = STATUS_COLORS[isFuture ? "future" : getCardioStatus(day)];
 
           return (
             <div
@@ -140,28 +131,31 @@ export default function CalendarView() {
                 aspectRatio: "1",
                 display: "flex",
                 flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 3,
-                background: sc.bg,
-                border: `1px solid ${sc.border}`,
                 borderRadius: 4,
-                position: "relative",
+                overflow: "hidden",
+                border: `1px solid ${sc.border}`,
               }}
             >
-              <span style={{ color: sc.color, fontSize: 11, fontWeight: 600, fontFamily: FONT, lineHeight: 1 }}>
+              {/* Top half — Strength */}
+              <div style={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: sc.bg,
+                fontSize: 11,
+                fontWeight: 600,
+                color: sc.color,
+                fontFamily: FONT,
+                borderBottom: "1px solid #0c0c0c",
+              }}>
                 {day}
-              </span>
-              {/* Cardio dot — only show for past/today */}
-              {!isFuture && (
-                <div style={{
-                  width: 5,
-                  height: 5,
-                  borderRadius: "50%",
-                  background: dotColor,
-                  opacity: cardioStatus === "none" ? 0.3 : 1,
-                }} />
-              )}
+              </div>
+              {/* Bottom half — Cardio */}
+              <div style={{
+                flex: 1,
+                background: cs.bg,
+              }} />
             </div>
           );
         })}
