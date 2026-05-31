@@ -129,7 +129,7 @@ export default function CardioView({ onComplete, onBack }: Props) {
           <Stepper
             value={activeCardioSession.speed}
             onChange={v => dispatch({ type: "UPDATE_CARDIO_FIELD", field: "speed", value: v })}
-            step={0.5}
+            step={0.1}
             min={0.5}
             label="Speed"
             unit="mph"
