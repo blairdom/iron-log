@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer } from "react";
+import React, { createContext, useContext, useReducer, useEffect } from "react";
 import type { SessionRecord, AdherenceRecord, RecoveryModeRecord, PlannedAbsence, GoalRecord, BehavioralState, SetRecord, SalvageType, CardioSession, CardioBehavioralState } from "../engine/types";
 import type { DayTemplate } from "../data/program";
 import {
@@ -13,6 +13,9 @@ import {
   computeCardioBehavioralState,
 } from "../engine/behavioral";
 import { getExerciseById } from "../data/exercises";
+import {
+  fetchRemoteData, pushSessions, pushCardioSessions, pushProgram, pushAdherence,
+} from "./sync";
 
 interface AppState {
   sessions: SessionRecord[];
@@ -47,6 +50,7 @@ type Action =
   | { type: "REMOVE_SLOT"; dayKey: string; sectionId: string; slotId: string }
   | { type: "ADD_SECTION"; dayKey: string }
   | { type: "REMOVE_SECTION"; dayKey: string; sectionId: string }
+  | { type: "HYDRATE"; sessions: SessionRecord[]; cardioSessions: CardioSession[]; program: DayTemplate[]; adherenceRecords: AdherenceRecord[] }
   | { type: "START_CARDIO_SESSION" }
   | { type: "UPDATE_CARDIO_FIELD"; field: "duration" | "speed"; value: number }
   | { type: "COMPLETE_CARDIO_SESSION" }
@@ -109,6 +113,19 @@ function computeSummary(exercises: import("../engine/types").ExerciseRecord[]) {
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
+    case "HYDRATE": {
+      const { sessions, cardioSessions, program, adherenceRecords } = action;
+      // Persist to localStorage so offline works after hydration
+      saveSessions(sessions);
+      saveCardioSessions(cardioSessions);
+      saveProgram(program);
+      saveAdherence(adherenceRecords);
+      const recoveryMode = state.recoveryMode;
+      const behavioral = computeBehavioralState(sessions, adherenceRecords, recoveryMode, [], state.today);
+      const cardioBehavioral = computeCardioBehavioralState(cardioSessions, state.today);
+      return { ...state, sessions, cardioSessions, adherenceRecords, program, behavioral, cardioBehavioral };
+    }
+
     case "START_SESSION": {
       const active = buildActiveSession(action.dayKey, state.program, state.sessions);
       return { ...state, activeSession: { ...active, status: "not_started" } };
@@ -233,6 +250,8 @@ function reducer(state: AppState, action: Action): AppState {
       saveSessions(sessions);
       saveAdherence(adherenceRecords);
       saveRecoveryMode(recoveryMode);
+      pushSessions(sessions);
+      pushAdherence(adherenceRecords);
 
       return { ...state, sessions, adherenceRecords, recoveryMode, behavioral, activeSession: null };
     }
@@ -279,6 +298,8 @@ function reducer(state: AppState, action: Action): AppState {
       const behavioral = computeBehavioralState(sessions, adherenceRecords, state.recoveryMode, state.goals, state.today);
       saveSessions(sessions);
       saveAdherence(adherenceRecords);
+      pushSessions(sessions);
+      pushAdherence(adherenceRecords);
 
       return { ...state, sessions, adherenceRecords, behavioral };
     }
@@ -334,6 +355,7 @@ function reducer(state: AppState, action: Action): AppState {
         };
       });
       saveProgram(program);
+      pushProgram(program);
       return { ...state, program };
     }
 
@@ -356,6 +378,7 @@ function reducer(state: AppState, action: Action): AppState {
         };
       });
       saveProgram(program);
+      pushProgram(program);
       return { ...state, program };
     }
 
@@ -371,6 +394,7 @@ function reducer(state: AppState, action: Action): AppState {
         };
       });
       saveProgram(program);
+      pushProgram(program);
       return { ...state, program };
     }
 
@@ -385,6 +409,7 @@ function reducer(state: AppState, action: Action): AppState {
         return { ...day, sections: [...day.sections, newSection] };
       });
       saveProgram(program);
+      pushProgram(program);
       return { ...state, program };
     }
 
@@ -394,6 +419,7 @@ function reducer(state: AppState, action: Action): AppState {
         return { ...day, sections: day.sections.filter(s => s.id !== action.sectionId) };
       });
       saveProgram(program);
+      pushProgram(program);
       return { ...state, program };
     }
 
@@ -431,6 +457,7 @@ function reducer(state: AppState, action: Action): AppState {
         completed,
       ];
       saveCardioSessions(cardioSessions);
+      pushCardioSessions(cardioSessions);
       const cardioBehavioral = computeCardioBehavioralState(cardioSessions, state.today);
       return { ...state, cardioSessions, cardioBehavioral, activeCardioSession: null };
     }
@@ -474,6 +501,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     today,
     todayKey,
   });
+
+  // On mount: fetch from server and hydrate state (overrides localStorage)
+  useEffect(() => {
+    fetchRemoteData().then(remote => {
+      if (!remote) return; // offline or no server — localStorage already loaded
+      dispatch({
+        type: "HYDRATE",
+        sessions: remote.sessions.length > 0 ? remote.sessions : sessions,
+        cardioSessions: remote.cardio_sessions.length > 0 ? remote.cardio_sessions : cardioSessions,
+        program: remote.program ?? program,
+        adherenceRecords: remote.adherence_records.length > 0 ? remote.adherence_records : adherenceRecords,
+      });
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <AppContext.Provider value={{ state, dispatch }}>
