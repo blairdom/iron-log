@@ -245,7 +245,17 @@ export function computeGoals(
   streak: number,
   today: string
 ): import("./types").GoalRecord[] {
-  const updated = goals.map(g => ({ ...g }));
+  // Migrate labels for clarity
+  const LABELS: Record<string, string> = {
+    "t1-m1": "Complete 3 sessions in a week",
+    "t1-m2": "2 consecutive green weeks",
+    "t2-m1": "4-week streak (20 sessions)",
+    "t2-m2": "8-week streak (40 sessions)",
+    "t3-m1": "12 weeks adherence above 80%",
+    "t3-m2": "6 months adherence above 80%",
+    "t4-m1": "1 year of consistent training",
+  };
+  const updated = goals.map(g => ({ ...g, label: LABELS[g.id] ?? g.label }));
 
   // Find active goal (first non-achieved)
   const activeIdx = updated.findIndex(g => g.status !== "achieved");

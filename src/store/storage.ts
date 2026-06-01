@@ -102,10 +102,10 @@ const SEED_CARDIO: CardioSession[] = [
 ];
 
 const DEFAULT_GOALS: GoalRecord[] = [
-  { id: "t1-m1", tier: 1, label: "3 sessions this week", status: "active", achievedDate: null, progressValue: 0, targetValue: 3 },
+  { id: "t1-m1", tier: 1, label: "Complete 3 sessions in a week", status: "active", achievedDate: null, progressValue: 0, targetValue: 3 },
   { id: "t1-m2", tier: 1, label: "2 consecutive green weeks", status: "locked", achievedDate: null, progressValue: 0, targetValue: 2 },
-  { id: "t2-m1", tier: 2, label: "4-week streak", status: "locked", achievedDate: null, progressValue: 0, targetValue: 28 },
-  { id: "t2-m2", tier: 2, label: "8-week streak", status: "locked", achievedDate: null, progressValue: 0, targetValue: 56 },
+  { id: "t2-m1", tier: 2, label: "4-week streak (20 sessions)", status: "locked", achievedDate: null, progressValue: 0, targetValue: 20 },
+  { id: "t2-m2", tier: 2, label: "8-week streak (40 sessions)", status: "locked", achievedDate: null, progressValue: 0, targetValue: 40 },
   { id: "t3-m1", tier: 3, label: "12 weeks adherence above 80%", status: "locked", achievedDate: null, progressValue: 0, targetValue: 84 },
   { id: "t3-m2", tier: 3, label: "6 months adherence above 80%", status: "locked", achievedDate: null, progressValue: 0, targetValue: 180 },
   { id: "t4-m1", tier: 4, label: "1 year of consistent training", status: "locked", achievedDate: null, progressValue: 0, targetValue: 365 },

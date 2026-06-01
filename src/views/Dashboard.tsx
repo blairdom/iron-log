@@ -241,7 +241,7 @@ export default function Dashboard({ onStartSession, onLogCardio }: Props) {
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e", flexShrink: 0 }} />
-            <div style={{ fontSize: 12, color: "#888", fontFamily: FONT }}>{activeGoal.label}</div>
+            <div style={{ fontSize: 12, color: "#888", fontFamily: FONT }}>Goal: {activeGoal.label}</div>
           </div>
           <div style={{ fontSize: 12, color: "#fff", fontFamily: FONT, fontWeight: 600, flexShrink: 0 }}>
             {activeGoal.progressValue}/{activeGoal.targetValue}
