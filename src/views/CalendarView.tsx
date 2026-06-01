@@ -78,8 +78,11 @@ export default function CalendarView() {
 
   const cardioDone    = weekCardio.filter(s => s.status === "complete").length;
   const cardioMissed  = weekCardio.filter(s => s.status === "skipped").length;
-  // Days elapsed this week so far
-  const daysElapsed = Math.min(7, Math.ceil((now.getTime() - weekStart.getTime()) / 86400000) + 1);
+  // Days elapsed: count days with a logged cardio result (complete or skipped),
+  // plus today if it's already logged — never counts today as "elapsed" unless done.
+  const daysElapsed = weekCardio.filter(s =>
+    s.status === "complete" || s.status === "skipped"
+  ).length;
   const cardioAdherence = daysElapsed > 0
     ? Math.round((cardioDone / daysElapsed) * 100)
     : 0;
