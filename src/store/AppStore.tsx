@@ -7,10 +7,11 @@ import {
   loadRecoveryMode, saveRecoveryMode,
   loadProgram, saveProgram,
   loadCardioSessions, saveCardioSessions,
+  loadGoals, saveGoals,
 } from "./storage";
 import {
   computeBehavioralState, toDateString, getTodayKey, adherenceValue, isScheduledDay,
-  computeCardioBehavioralState,
+  computeCardioBehavioralState, computeGoals,
 } from "../engine/behavioral";
 import { getExerciseById } from "../data/exercises";
 import {
@@ -39,8 +40,10 @@ type Action =
   | { type: "MARK_SALVAGE"; salvageType: SalvageType }
   | { type: "ADD_SET"; exerciseIdx: number }
   | { type: "UPDATE_SET"; exerciseIdx: number; setIdx: number; field: keyof SetRecord; value: number | string }
+  | { type: "REMOVE_SET"; exerciseIdx: number; setIdx: number }
   | { type: "SWAP_EXERCISE"; exerciseIdx: number; newExerciseId: string }
   | { type: "COMPLETE_SESSION" }
+  | { type: "FLUB_SESSION" }
   | { type: "SKIP_SESSION"; dayKey: string }
   | { type: "ENTER_RECOVERY_MODE" }
   | { type: "EXIT_RECOVERY_MODE" }
@@ -121,9 +124,10 @@ function reducer(state: AppState, action: Action): AppState {
       saveProgram(program);
       saveAdherence(adherenceRecords);
       const recoveryMode = state.recoveryMode;
-      const behavioral = computeBehavioralState(sessions, adherenceRecords, recoveryMode, [], state.today);
+      const behavioral = computeBehavioralState(sessions, adherenceRecords, recoveryMode, state.goals, state.today);
+      const goals = computeGoals(state.goals, sessions, adherenceRecords, behavioral.streak, state.today);
       const cardioBehavioral = computeCardioBehavioralState(cardioSessions, state.today);
-      return { ...state, sessions, cardioSessions, adherenceRecords, program, behavioral, cardioBehavioral };
+      return { ...state, sessions, cardioSessions, adherenceRecords, program, behavioral, goals, cardioBehavioral };
     }
 
     case "START_SESSION": {
@@ -176,6 +180,15 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, activeSession: { ...state.activeSession, exercises } };
     }
 
+    case "REMOVE_SET": {
+      if (!state.activeSession) return state;
+      const exercises = state.activeSession.exercises.map((e, i) => {
+        if (i !== action.exerciseIdx) return e;
+        return { ...e, sets: e.sets.filter((_, j) => j !== action.setIdx) };
+      });
+      return { ...state, activeSession: { ...state.activeSession, exercises } };
+    }
+
     case "SWAP_EXERCISE": {
       if (!state.activeSession) return state;
       const ex = getExerciseById(action.newExerciseId);
@@ -196,16 +209,10 @@ function reducer(state: AppState, action: Action): AppState {
     case "COMPLETE_SESSION": {
       if (!state.activeSession) return state;
       const session = state.activeSession;
-      const completedCount = session.exercises.filter(e => e.completed).length;
-      const total = session.exercises.length;
-      const ratio = total > 0 ? completedCount / total : 0;
-
-      let status: "complete" | "partial" = ratio >= 0.8 ? "complete" : "partial";
-      if (session.salvageType) status = "partial";
 
       const finalSession: SessionRecord = {
         ...session,
-        status,
+        status: "complete",
         completedAt: new Date().toISOString(),
         summary: computeSummary(session.exercises),
       };
@@ -219,8 +226,8 @@ function reducer(state: AppState, action: Action): AppState {
         date: finalSession.date,
         scheduled: isScheduledDay(finalSession.dayKey),
         completed: true,
-        partial: status === "partial",
-        adherenceValue: adherenceValue(status),
+        partial: false,
+        adherenceValue: 1.0,
         threatState: state.behavioral.threatState,
         recoveryMode: state.recoveryMode.active,
         plannedAbsence: false,
@@ -246,14 +253,69 @@ function reducer(state: AppState, action: Action): AppState {
       }
 
       const behavioral = computeBehavioralState(sessions, adherenceRecords, recoveryMode, state.goals, state.today);
+      const goals = computeGoals(state.goals, sessions, adherenceRecords, behavioral.streak, state.today);
 
       saveSessions(sessions);
       saveAdherence(adherenceRecords);
       saveRecoveryMode(recoveryMode);
+      saveGoals(goals);
       pushSessions(sessions);
       pushAdherence(adherenceRecords);
 
-      return { ...state, sessions, adherenceRecords, recoveryMode, behavioral, activeSession: null };
+      return { ...state, sessions, adherenceRecords, recoveryMode, behavioral, goals, activeSession: null };
+    }
+
+    case "FLUB_SESSION": {
+      if (!state.activeSession) return state;
+      const session = state.activeSession;
+
+      const finalSession: SessionRecord = {
+        ...session,
+        status: "partial",
+        completedAt: new Date().toISOString(),
+        summary: computeSummary(session.exercises),
+      };
+
+      const sessions = [
+        ...state.sessions.filter(s => !(s.date === finalSession.date && s.dayKey === finalSession.dayKey)),
+        finalSession,
+      ];
+
+      const adherenceRec: AdherenceRecord = {
+        date: finalSession.date,
+        scheduled: isScheduledDay(finalSession.dayKey),
+        completed: true,
+        partial: true,
+        adherenceValue: 0.5,
+        threatState: state.behavioral.threatState,
+        recoveryMode: state.recoveryMode.active,
+        plannedAbsence: false,
+      };
+
+      const adherenceRecords = [
+        ...state.adherenceRecords.filter(r => !(r.date === adherenceRec.date && r.scheduled)),
+        adherenceRec,
+      ];
+
+      let recoveryMode = { ...state.recoveryMode };
+      if (recoveryMode.active) {
+        recoveryMode.consecutiveCompletedDuringRecovery += 1;
+        if (recoveryMode.consecutiveCompletedDuringRecovery >= 3) {
+          recoveryMode = { ...recoveryMode, active: false, exitDate: toDateString(), exitType: "auto" };
+        }
+      }
+
+      const behavioral = computeBehavioralState(sessions, adherenceRecords, recoveryMode, state.goals, state.today);
+      const goals = computeGoals(state.goals, sessions, adherenceRecords, behavioral.streak, state.today);
+
+      saveSessions(sessions);
+      saveAdherence(adherenceRecords);
+      saveRecoveryMode(recoveryMode);
+      saveGoals(goals);
+      pushSessions(sessions);
+      pushAdherence(adherenceRecords);
+
+      return { ...state, sessions, adherenceRecords, recoveryMode, behavioral, goals, activeSession: null };
     }
 
     case "SKIP_SESSION": {
@@ -482,7 +544,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const adherenceRecords = loadAdherence();
   const recoveryMode = loadRecoveryMode();
   const program = loadProgram();
-  const behavioral = computeBehavioralState(sessions, adherenceRecords, recoveryMode, [], today);
+  const goalsInit = loadGoals();
+  const behavioral = computeBehavioralState(sessions, adherenceRecords, recoveryMode, goalsInit, today);
+  const goals = computeGoals(goalsInit, sessions, adherenceRecords, behavioral.streak, today);
   const cardioSessions = loadCardioSessions();
   const cardioBehavioral = computeCardioBehavioralState(cardioSessions, today);
 
@@ -491,7 +555,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     adherenceRecords,
     recoveryMode,
     absences: [],
-    goals: [],
+    goals,
     program,
     activeSession: null,
     behavioral,

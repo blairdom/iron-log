@@ -9,8 +9,9 @@ interface Props {
 
 export default function Dashboard({ onStartSession, onLogCardio }: Props) {
   const { state, dispatch } = useApp();
-  const { behavioral, cardioBehavioral, program, sessions, todayKey, today } = state;
+  const { behavioral, cardioBehavioral, program, sessions, todayKey, today, goals } = state;
   const { threatState, streak, adherenceRate, recoveryMode } = behavioral;
+  const activeGoal = goals.find(g => g.status === "active") ?? null;
   const tc = THREAT_COLORS[threatState];
   const cardioTc = THREAT_COLORS[cardioBehavioral.threatState];
 
@@ -225,6 +226,28 @@ export default function Dashboard({ onStartSession, onLogCardio }: Props) {
           <div style={label}>Cardio 7-Day</div>
         </div>
       </div>
+
+      {/* Current Goal */}
+      {activeGoal && (
+        <div style={{
+          marginTop: 16,
+          padding: "10px 14px",
+          background: "#111",
+          border: "1px solid #1a1a1a",
+          borderRadius: 6,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e", flexShrink: 0 }} />
+            <div style={{ fontSize: 12, color: "#888", fontFamily: FONT }}>{activeGoal.label}</div>
+          </div>
+          <div style={{ fontSize: 12, color: "#fff", fontFamily: FONT, fontWeight: 600, flexShrink: 0 }}>
+            {activeGoal.progressValue}/{activeGoal.targetValue}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

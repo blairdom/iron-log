@@ -51,6 +51,20 @@ export default function SessionView({ onComplete, onBack }: Props) {
     onComplete();
   }
 
+  function handleFlubSession() {
+    dispatch({ type: "FLUB_SESSION" });
+    onComplete();
+  }
+
+  function handleRemoveSet(exIdx: number, setIdx: number) {
+    dispatch({ type: "REMOVE_SET", exerciseIdx: exIdx, setIdx });
+  }
+
+  function trimLeadingZeros(exIdx: number, setIdx: number, field: "reps" | "weight", val: string) {
+    const n = parseInt(val) || 0;
+    dispatch({ type: "UPDATE_SET", exerciseIdx: exIdx, setIdx, field, value: n });
+  }
+
   const { summary } = activeSession;
 
   // Group exercises back into sections for display
@@ -188,6 +202,7 @@ export default function SessionView({ onComplete, onBack }: Props) {
                           value={set.reps}
                           style={{ background: "#111", border: "1px solid #222", borderRadius: 3, padding: "6px 10px", color: "#e0e0e0", fontFamily: FONT, fontSize: 13, fontWeight: 600, width: 52, textAlign: "center" }}
                           onChange={e => handleUpdateSet(absIdx, setIdx, "reps", parseInt(e.target.value) || 0)}
+                          onBlur={e => trimLeadingZeros(absIdx, setIdx, "reps", e.target.value)}
                           onClick={e => e.stopPropagation()}
                         />
                         <div style={{ fontSize: 10, color: "#555", width: 24 }}>reps</div>
@@ -196,11 +211,21 @@ export default function SessionView({ onComplete, onBack }: Props) {
                           value={set.weight}
                           style={{ background: "#111", border: "1px solid #222", borderRadius: 3, padding: "6px 10px", color: "#e0e0e0", fontFamily: FONT, fontSize: 13, fontWeight: 600, width: 52, textAlign: "center" }}
                           onChange={e => handleUpdateSet(absIdx, setIdx, "weight", parseInt(e.target.value) || 0)}
+                          onBlur={e => trimLeadingZeros(absIdx, setIdx, "weight", e.target.value)}
                           onClick={e => e.stopPropagation()}
                         />
                         <div style={{ fontSize: 10, color: "#555", width: 24 }}>
                           {set.weight ? "lbs" : "bw"}
                         </div>
+                        {ex.sets.length > 1 && (
+                          <button
+                            style={{ background: "none", border: "none", color: "#444", cursor: "pointer", fontSize: 14, padding: "0 4px", fontFamily: FONT, lineHeight: 1 }}
+                            onClick={e => { e.stopPropagation(); handleRemoveSet(absIdx, setIdx); }}
+                            title="Remove set"
+                          >
+                            ✕
+                          </button>
+                        )}
                       </div>
                     ))}
 
@@ -253,11 +278,33 @@ export default function SessionView({ onComplete, onBack }: Props) {
           textTransform: "uppercase",
           cursor: "pointer",
           marginTop: 20,
-          marginBottom: 40,
         }}
         onClick={handleCompleteSession}
       >
         ✓ COMPLETE SESSION
+      </button>
+
+      {/* Flub Button */}
+      <button
+        style={{
+          width: "100%",
+          padding: 12,
+          background: "#111",
+          border: "1px solid #222",
+          borderRadius: 6,
+          color: "#555",
+          fontSize: 12,
+          fontWeight: 600,
+          fontFamily: FONT,
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          cursor: "pointer",
+          marginTop: 8,
+          marginBottom: 40,
+        }}
+        onClick={handleFlubSession}
+      >
+        FLUB — I PHONED IT IN
       </button>
     </div>
   );

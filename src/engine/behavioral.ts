@@ -228,6 +228,129 @@ export function computeCardioBehavioralState(
   return { threatState, streak, adherenceRate, todayStatus };
 }
 
+// ─── Goals Engine ────────────────────────────────────────────────────────────
+
+function getWeekStart(dateStr: string): string {
+  const d = new Date(dateStr + "T12:00:00");
+  const day = d.getDay(); // 0=Sun
+  const diff = day === 0 ? -6 : 1 - day; // shift to Monday
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().split("T")[0];
+}
+
+export function computeGoals(
+  goals: import("./types").GoalRecord[],
+  sessions: SessionRecord[],
+  adherenceRecords: AdherenceRecord[],
+  streak: number,
+  today: string
+): import("./types").GoalRecord[] {
+  const updated = goals.map(g => ({ ...g }));
+
+  // Find active goal (first non-achieved)
+  const activeIdx = updated.findIndex(g => g.status !== "achieved");
+  if (activeIdx === -1) return updated;
+
+  // Ensure only the active one is "active", rest are locked (unless achieved)
+  for (let i = 0; i < updated.length; i++) {
+    if (updated[i].status === "achieved") continue;
+    updated[i].status = i === activeIdx ? "active" : "locked";
+  }
+
+  const active = updated[activeIdx];
+
+  // Compute progress for the active goal
+  if (active.id === "t1-m1") {
+    // 3 sessions this week (Mon–Sun)
+    const weekStart = getWeekStart(today);
+    const count = sessions.filter(s =>
+      s.date >= weekStart && s.date <= today &&
+      isScheduledDay(s.dayKey) &&
+      (s.status === "complete" || s.status === "partial")
+    ).length;
+    active.progressValue = Math.min(count, active.targetValue);
+    if (active.progressValue >= active.targetValue) {
+      active.status = "achieved";
+      active.achievedDate = today;
+      // Unlock next
+      if (activeIdx + 1 < updated.length) updated[activeIdx + 1].status = "active";
+    }
+  } else if (active.id === "t1-m2") {
+    // 2 consecutive green weeks (adherence >= 80% each week)
+    let consecutive = 0;
+    for (let w = 0; w < 12; w++) {
+      const wEnd = dateSubDays(today, w * 7);
+      const wStart = dateSubDays(wEnd, 6);
+      const weekRecs = adherenceRecords.filter(r =>
+        r.date >= wStart && r.date <= wEnd && r.scheduled && !r.recoveryMode && !r.plannedAbsence
+      );
+      if (weekRecs.length === 0) break;
+      const rate = weekRecs.reduce((a, r) => a + r.adherenceValue, 0) / weekRecs.length;
+      if (rate >= 0.8) consecutive++;
+      else break;
+    }
+    active.progressValue = Math.min(consecutive, active.targetValue);
+    if (active.progressValue >= active.targetValue) {
+      active.status = "achieved";
+      active.achievedDate = today;
+      if (activeIdx + 1 < updated.length) updated[activeIdx + 1].status = "active";
+    }
+  } else if (active.id === "t2-m1") {
+    // 4-week streak = 20 scheduled sessions
+    active.progressValue = Math.min(streak, active.targetValue);
+    if (active.progressValue >= active.targetValue) {
+      active.status = "achieved";
+      active.achievedDate = today;
+      if (activeIdx + 1 < updated.length) updated[activeIdx + 1].status = "active";
+    }
+  } else if (active.id === "t2-m2") {
+    // 8-week streak = 40 scheduled sessions
+    active.progressValue = Math.min(streak, active.targetValue);
+    if (active.progressValue >= active.targetValue) {
+      active.status = "achieved";
+      active.achievedDate = today;
+      if (activeIdx + 1 < updated.length) updated[activeIdx + 1].status = "active";
+    }
+  } else if (active.id === "t3-m1") {
+    // 12 weeks adherence > 80%: count eligible days in 84-day window
+    const rate84 = computeAdherenceRate(adherenceRecords, today, 84);
+    const eligibleDays = adherenceRecords.filter(r =>
+      r.date >= dateSubDays(today, 83) && r.date <= today && r.scheduled && !r.recoveryMode && !r.plannedAbsence
+    ).length;
+    active.progressValue = Math.min(eligibleDays, active.targetValue);
+    if (eligibleDays >= active.targetValue && rate84 >= 0.8) {
+      active.status = "achieved";
+      active.achievedDate = today;
+      if (activeIdx + 1 < updated.length) updated[activeIdx + 1].status = "active";
+    }
+  } else if (active.id === "t3-m2") {
+    // 6 months adherence > 80%
+    const rate180 = computeAdherenceRate(adherenceRecords, today, 180);
+    const eligible = adherenceRecords.filter(r =>
+      r.date >= dateSubDays(today, 179) && r.date <= today && r.scheduled && !r.recoveryMode && !r.plannedAbsence
+    ).length;
+    active.progressValue = Math.min(eligible, active.targetValue);
+    if (eligible >= active.targetValue && rate180 >= 0.8) {
+      active.status = "achieved";
+      active.achievedDate = today;
+      if (activeIdx + 1 < updated.length) updated[activeIdx + 1].status = "active";
+    }
+  } else if (active.id === "t4-m1") {
+    // 1 year consistent training
+    const rate365 = computeAdherenceRate(adherenceRecords, today, 365);
+    const eligible = adherenceRecords.filter(r =>
+      r.date >= dateSubDays(today, 364) && r.date <= today && r.scheduled && !r.recoveryMode && !r.plannedAbsence
+    ).length;
+    active.progressValue = Math.min(eligible, active.targetValue);
+    if (eligible >= active.targetValue && rate365 >= 0.8) {
+      active.status = "achieved";
+      active.achievedDate = today;
+    }
+  }
+
+  return updated;
+}
+
 export function computeCardioWeeklyMinutes(
   sessions: CardioSession[],
   weekStart: string

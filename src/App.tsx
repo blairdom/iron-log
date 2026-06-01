@@ -1,15 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppProvider, useApp } from "./store/AppStore";
 import Dashboard from "./views/Dashboard";
 import SessionView from "./views/SessionView";
 import CardioView from "./views/CardioView";
 import ProgramEditor from "./views/ProgramEditor";
 import CalendarView from "./views/CalendarView";
+import GoalsView from "./views/GoalsView";
+import WeeklyReviewCard from "./components/WeeklyReviewCard";
 import { FONT, THREAT_COLORS } from "./components/theme";
 import { useLayout } from "./components/useLayout";
 import type { ThreatState } from "./engine/types";
 
-type View = "dashboard" | "session" | "cardio" | "program" | "calendar";
+type View = "dashboard" | "session" | "cardio" | "program" | "calendar" | "goals";
 
 const NAV_TABS: { key: View; label: string }[] = [
   { key: "dashboard", label: "Dashboard" },
@@ -17,15 +19,35 @@ const NAV_TABS: { key: View; label: string }[] = [
   { key: "cardio",    label: "Cardio"    },
   { key: "program",   label: "Program"   },
   { key: "calendar",  label: "Calendar"  },
+  { key: "goals",     label: "Goals"     },
 ];
+
+const REVIEW_KEY = "ironlog_weekly_review_seen";
 
 function AppShell() {
   const { state, dispatch } = useApp();
   const [view, setView] = useState<View>("dashboard");
+  const [showReview, setShowReview] = useState(false);
   const { isMobile } = useLayout();
   const { behavioral } = state;
   const threatState = behavioral.threatState;
   const tc = THREAT_COLORS[threatState];
+
+  // Show weekly review card on Monday if not yet dismissed this week
+  useEffect(() => {
+    const today = new Date();
+    if (today.getDay() !== 1) return; // only Monday
+    const key = `${REVIEW_KEY}_${today.toISOString().split("T")[0]}`;
+    if (!localStorage.getItem(key)) {
+      setShowReview(true);
+    }
+  }, []);
+
+  function dismissReview() {
+    const today = new Date().toISOString().split("T")[0];
+    localStorage.setItem(`${REVIEW_KEY}_${today}`, "1");
+    setShowReview(false);
+  }
 
   function handleStartSession() {
     dispatch({ type: "START_SESSION", dayKey: state.todayKey });
@@ -44,6 +66,8 @@ function AppShell() {
       {view === "cardio"    && <CardioView  onComplete={() => setView("dashboard")} onBack={() => setView("dashboard")} />}
       {view === "program"   && <ProgramEditor />}
       {view === "calendar"  && <CalendarView />}
+      {view === "goals"     && <GoalsView />}
+      {showReview && <WeeklyReviewCard onDismiss={dismissReview} />}
     </>
   );
 
