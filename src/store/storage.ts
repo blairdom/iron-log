@@ -88,7 +88,11 @@ export function loadProgram(): DayTemplate[] {
         const defaultDay = DEFAULT_PROGRAM.find(d => d.key === day.key);
         const defaultSec = defaultDay?.sections.find(s => s.id === sec.id);
         const defaultSlot = defaultSec?.slots.find(s => s.id === slot.id);
-        return { ...slot, defaultSets: defaultSlot?.defaultSets ?? [{ reps: 10, weight: 0, unit: "lbs" as const }] };
+        return {
+          ...slot,
+          defaultSets: defaultSlot?.defaultSets ?? [{ reps: 10, weight: 0, unit: "lbs" as const }],
+          restSeconds: slot.restSeconds ?? defaultSlot?.restSeconds ?? 90,
+        };
       }),
     })),
   }));

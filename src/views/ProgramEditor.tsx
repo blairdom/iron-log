@@ -146,6 +146,33 @@ export default function ProgramEditor() {
                           </select>
                         </div>
 
+                        {/* Rest time */}
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ ...label, marginBottom: 6 }}>Rest Between Sets</div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <input
+                              type="number"
+                              value={slot.restSeconds ?? 90}
+                              style={{ background: "#111", border: "1px solid #222", borderRadius: 3, padding: "6px 8px", color: "#e0e0e0", fontFamily: FONT, fontSize: 13, fontWeight: 600, width: 64, textAlign: "center" }}
+                              onChange={e => {
+                                const val = parseInt(e.target.value) || 60;
+                                const program = state.program.map(d => d.key !== activeDay ? d : {
+                                  ...d,
+                                  sections: d.sections.map(s => s.id !== section.id ? s : {
+                                    ...s,
+                                    slots: s.slots.map(sl => sl.id !== slot.id ? sl : { ...sl, restSeconds: val }),
+                                  }),
+                                });
+                                dispatch({ type: "UPDATE_PROGRAM", program });
+                              }}
+                            />
+                            <div style={{ fontSize: 11, color: "#555", fontFamily: FONT }}>seconds</div>
+                            <div style={{ fontSize: 11, color: "#444", fontFamily: FONT }}>
+                              ({Math.floor((slot.restSeconds ?? 90) / 60)}:{String((slot.restSeconds ?? 90) % 60).padStart(2, "0")} min)
+                            </div>
+                          </div>
+                        </div>
+
                         {/* Default sets */}
                         <div style={{ ...label, marginBottom: 6 }}>Target Sets</div>
                         {slotSets.map((set, setIdx) => (

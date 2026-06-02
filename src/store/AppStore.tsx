@@ -459,6 +459,7 @@ function reducer(state: AppState, action: Action): AppState {
               movementPattern: "Horizontal Push",
               selectedExerciseId: "ex-001",
               defaultSets: [{ reps: 10, weight: 0, unit: "lbs" as const }],
+              restSeconds: 90,
             };
             return { ...sec, slots: [...sec.slots, newSlot] };
           }),
