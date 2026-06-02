@@ -49,6 +49,7 @@ type Action =
   | { type: "EXIT_RECOVERY_MODE" }
   | { type: "UPDATE_PROGRAM"; program: DayTemplate[] }
   | { type: "UPDATE_SLOT_EXERCISE"; dayKey: string; sectionId: string; slotId: string; exerciseId: string }
+  | { type: "UPDATE_SLOT_DEFAULTS"; dayKey: string; sectionId: string; slotId: string; defaultSets: import("../data/program").SlotSet[] }
   | { type: "ADD_SLOT"; dayKey: string; sectionId: string }
   | { type: "REMOVE_SLOT"; dayKey: string; sectionId: string; slotId: string }
   | { type: "ADD_SECTION"; dayKey: string }
@@ -77,9 +78,10 @@ function buildActiveSession(dayKey: string, program: DayTemplate[], sessions: Se
         .find(s => s.exercises.some(e => e.exerciseId === slot.selectedExerciseId));
 
       const lastExercise = lastSession?.exercises.find(e => e.exerciseId === slot.selectedExerciseId);
+      const slotDefaults: SetRecord[] = (slot.defaultSets ?? []).map(s => ({ ...s }));
       const defaultSets: SetRecord[] = lastExercise?.sets.length
         ? lastExercise.sets.map(s => ({ ...s }))
-        : [{ reps: 10, weight: 0, unit: "lbs" }];
+        : slotDefaults.length ? slotDefaults : [{ reps: 10, weight: 0, unit: "lbs" }];
 
       exercises.push({
         exerciseId: slot.selectedExerciseId,
@@ -421,6 +423,28 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, program };
     }
 
+    case "UPDATE_SLOT_DEFAULTS": {
+      const program = state.program.map(day => {
+        if (day.key !== action.dayKey) return day;
+        return {
+          ...day,
+          sections: day.sections.map(sec => {
+            if (sec.id !== action.sectionId) return sec;
+            return {
+              ...sec,
+              slots: sec.slots.map(slot => {
+                if (slot.id !== action.slotId) return slot;
+                return { ...slot, defaultSets: action.defaultSets };
+              }),
+            };
+          }),
+        };
+      });
+      saveProgram(program);
+      pushProgram(program);
+      return { ...state, program };
+    }
+
     case "ADD_SLOT": {
       const program = state.program.map(day => {
         if (day.key !== action.dayKey) return day;
@@ -434,6 +458,7 @@ function reducer(state: AppState, action: Action): AppState {
               subTarget: "New Slot",
               movementPattern: "Horizontal Push",
               selectedExerciseId: "ex-001",
+              defaultSets: [{ reps: 10, weight: 0, unit: "lbs" as const }],
             };
             return { ...sec, slots: [...sec.slots, newSlot] };
           }),

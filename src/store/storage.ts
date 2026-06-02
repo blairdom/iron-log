@@ -76,7 +76,22 @@ export function saveGoals(goals: GoalRecord[]): void {
 }
 
 export function loadProgram(): DayTemplate[] {
-  return load<DayTemplate[]>(KEYS.program, DEFAULT_PROGRAM);
+  const saved = load<DayTemplate[]>(KEYS.program, DEFAULT_PROGRAM);
+  // Backfill defaultSets for slots that predate this field
+  return saved.map(day => ({
+    ...day,
+    sections: day.sections.map(sec => ({
+      ...sec,
+      slots: sec.slots.map(slot => {
+        if (slot.defaultSets && slot.defaultSets.length > 0) return slot;
+        // Find matching slot in DEFAULT_PROGRAM to inherit its defaults
+        const defaultDay = DEFAULT_PROGRAM.find(d => d.key === day.key);
+        const defaultSec = defaultDay?.sections.find(s => s.id === sec.id);
+        const defaultSlot = defaultSec?.slots.find(s => s.id === slot.id);
+        return { ...slot, defaultSets: defaultSlot?.defaultSets ?? [{ reps: 10, weight: 0, unit: "lbs" as const }] };
+      }),
+    })),
+  }));
 }
 
 export function saveProgram(program: DayTemplate[]): void {
