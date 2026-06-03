@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useApp } from "../store/AppStore";
 import { FONT, screen, sectionHeader, addBtn, dropdown, card, label } from "../components/theme";
 import { EXERCISES } from "../data/exercises";
@@ -13,6 +13,26 @@ function fmt(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function playBell() {
+  try {
+    const ctx = new AudioContext();
+    // Two-tone bell: high note then slightly lower
+    [880, 660].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      const t = ctx.currentTime + i * 0.18;
+      gain.gain.setValueAtTime(0.5, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+      osc.start(t);
+      osc.stop(t + 1.2);
+    });
+  } catch { /* audio blocked or unavailable */ }
 }
 
 interface SetTimerState {
@@ -73,7 +93,8 @@ export default function SessionView({ onComplete, onBack }: Props) {
       setRestTimer(prev => {
         if (!prev || prev.done) return prev;
         const next = prev.remaining - 1;
-        return { ...prev, remaining: Math.max(0, next), done: next <= 0 };
+        if (next <= 0) playBell();
+        return { ...prev, remaining: 0, done: next <= 0 };
       });
     }, 1000);
     return () => clearInterval(id);
@@ -87,7 +108,9 @@ export default function SessionView({ onComplete, onBack }: Props) {
 
   function stopSetTimer(exIdx: number) {
     setSetTimer(prev => prev ? { ...prev, running: false } : null);
-    // Auto-start rest timer for this exercise
+    // Mark the exercise as complete
+    dispatch({ type: "COMPLETE_EXERCISE", exerciseIdx: exIdx });
+    // Auto-start rest timer
     const preset = restPresets[exIdx] ?? 90;
     setRestTimer({ exIdx, remaining: preset, total: preset, done: false });
   }
