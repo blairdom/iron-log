@@ -72,6 +72,13 @@ export const EXERCISES: Exercise[] = [
   { id: "ex-049", name: "Hammer Curl", bodyPart: "Biceps", subTarget: "Brachialis", movementPattern: "Isolation", equipmentRequired: ["Dumbbells"], benchPosition: "N/A", difficulty: "Beginner", type: "Isolation" },
   { id: "ex-050", name: "Concentration Curl", bodyPart: "Biceps", subTarget: "Bicep Peak", movementPattern: "Isolation", equipmentRequired: ["Dumbbells", "Bench"], benchPosition: "N/A", difficulty: "Beginner", type: "Isolation" },
   { id: "ex-051", name: "Kettlebell Curl", bodyPart: "Biceps", subTarget: "Biceps", movementPattern: "Isolation", equipmentRequired: ["Kettlebells"], benchPosition: "N/A", difficulty: "Beginner", type: "Isolation" },
+  // CALVES
+  { id: "ex-056", name: "Standing Dumbbell Calf Raise", bodyPart: "Calves", subTarget: "Gastrocnemius", movementPattern: "Calf Raise", equipmentRequired: ["Dumbbells"], benchPosition: "N/A", difficulty: "Beginner", type: "Isolation" },
+  { id: "ex-057", name: "Single-Leg Bodyweight Calf Raise", bodyPart: "Calves", subTarget: "Gastrocnemius", movementPattern: "Calf Raise", equipmentRequired: ["Bodyweight"], benchPosition: "N/A", difficulty: "Beginner", type: "Isolation" },
+  { id: "ex-058", name: "Elevated Calf Raise (Plyo Box)", bodyPart: "Calves", subTarget: "Gastrocnemius", movementPattern: "Calf Raise", equipmentRequired: ["Plyo Box", "Bodyweight"], benchPosition: "N/A", difficulty: "Beginner", type: "Isolation" },
+  { id: "ex-059", name: "Single-Leg Elevated Calf Raise", bodyPart: "Calves", subTarget: "Gastrocnemius", movementPattern: "Calf Raise", equipmentRequired: ["Plyo Box", "Bodyweight"], benchPosition: "N/A", difficulty: "Intermediate", type: "Isolation" },
+  { id: "ex-060", name: "Seated Dumbbell Calf Raise", bodyPart: "Calves", subTarget: "Soleus", movementPattern: "Calf Raise", equipmentRequired: ["Dumbbells", "Bench"], benchPosition: "N/A", difficulty: "Beginner", type: "Isolation" },
+  { id: "ex-061", name: "Kettlebell Calf Raise", bodyPart: "Calves", subTarget: "Gastrocnemius", movementPattern: "Calf Raise", equipmentRequired: ["Kettlebells"], benchPosition: "N/A", difficulty: "Beginner", type: "Isolation" },
   // MOBILITY / RECOVERY
   { id: "ex-052", name: "Kettlebell Halo", bodyPart: "Shoulders", subTarget: "Shoulder Mobility", movementPattern: "Rotation", equipmentRequired: ["Kettlebells"], benchPosition: "N/A", difficulty: "Beginner", type: "Compound" },
   { id: "ex-053", name: "Mace 360 (Light)", bodyPart: "Shoulders", subTarget: "Shoulder Mobility", movementPattern: "Rotation", equipmentRequired: ["Mace"], benchPosition: "N/A", difficulty: "Beginner", type: "Compound" },
