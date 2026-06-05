@@ -103,8 +103,9 @@ export default function ProgramEditor() {
                 const ex = EXERCISES.find(e => e.id === slot.selectedExerciseId);
                 const isEditing = editingSlot === slot.id;
                 const slotSets: SlotSet[] = slot.defaultSets ?? [{ reps: 10, weight: 0, unit: "lbs" }];
-                const compatibleExs = EXERCISES.filter(e =>
-                  e.bodyPart === slot.bodyPart || e.movementPattern === slot.movementPattern
+                // Program editor shows all exercises, grouped by body part
+                const compatibleExs = [...EXERCISES].sort((a, b) =>
+                  a.bodyPart.localeCompare(b.bodyPart) || a.name.localeCompare(b.name)
                 );
 
                 return (
@@ -145,7 +146,18 @@ export default function ProgramEditor() {
                             style={dropdown}
                             value={slot.selectedExerciseId}
                             onChange={e => {
+                              const picked = EXERCISES.find(x => x.id === e.target.value);
                               dispatch({ type: "UPDATE_SLOT_EXERCISE", dayKey: activeDay, sectionId: section.id, slotId: slot.id, exerciseId: e.target.value });
+                              if (picked) {
+                                const updated = state.program.map(d => d.key !== activeDay ? d : ({
+                                  ...d, sections: d.sections.map(s => s.id !== section.id ? s : ({
+                                    ...s, slots: s.slots.map(sl => sl.id !== slot.id ? sl : ({
+                                      ...sl, bodyPart: picked.bodyPart, movementPattern: picked.movementPattern,
+                                    })),
+                                  })),
+                                }));
+                                dispatch({ type: "UPDATE_PROGRAM", program: updated });
+                              }
                             }}
                           >
                             {compatibleExs.map(ce => (
