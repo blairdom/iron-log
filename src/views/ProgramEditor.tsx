@@ -122,8 +122,16 @@ export default function ProgramEditor() {
                           {setsLabel(slotSets)}
                         </div>
                       </div>
-                      <div style={{ fontSize: 11, color: "#444", fontFamily: FONT, marginLeft: 8 }}>
-                        {isEditing ? "▲" : "▼"}
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                        <div style={{ fontSize: 11, color: "#444", fontFamily: FONT }}>{isEditing ? "▲" : "▼"}</div>
+                        <button
+                          style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: 16, padding: "4px 6px", fontFamily: FONT, lineHeight: 1 }}
+                          title="Remove exercise"
+                          onClick={e => {
+                            e.stopPropagation();
+                            dispatch({ type: "REMOVE_SLOT", dayKey: activeDay, sectionId: section.id, slotId: slot.id });
+                          }}
+                        >✕</button>
                       </div>
                     </div>
 
@@ -202,17 +210,9 @@ export default function ProgramEditor() {
                             )}
                           </div>
                         ))}
-                        <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-                          <button style={{ ...addBtn }} onClick={() => addDefaultSet(section.id, slot.id, slotSets)}>
-                            + ADD SET
-                          </button>
-                          <button
-                            style={{ ...addBtn, color: "#444", borderColor: "#1a1a1a" }}
-                            onClick={() => dispatch({ type: "REMOVE_SLOT", dayKey: activeDay, sectionId: section.id, slotId: slot.id })}
-                          >
-                            REMOVE EXERCISE
-                          </button>
-                        </div>
+                        <button style={{ ...addBtn, marginTop: 4 }} onClick={() => addDefaultSet(section.id, slot.id, slotSets)}>
+                          + ADD SET
+                        </button>
                       </div>
                     )}
                   </div>

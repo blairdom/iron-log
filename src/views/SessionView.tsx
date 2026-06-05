@@ -94,7 +94,7 @@ export default function SessionView({ onComplete, onBack }: Props) {
         if (!prev || prev.done) return prev;
         const next = prev.remaining - 1;
         if (next <= 0) playBell();
-        return { ...prev, remaining: 0, done: next <= 0 };
+        return { ...prev, remaining: Math.max(0, next), done: next <= 0 };
       });
     }, 1000);
     return () => clearInterval(id);
@@ -108,8 +108,6 @@ export default function SessionView({ onComplete, onBack }: Props) {
 
   function stopSetTimer(exIdx: number) {
     setSetTimer(prev => prev ? { ...prev, running: false } : null);
-    // Mark the exercise as complete
-    dispatch({ type: "COMPLETE_EXERCISE", exerciseIdx: exIdx });
     // Auto-start rest timer
     const preset = restPresets[exIdx] ?? 90;
     setRestTimer({ exIdx, remaining: preset, total: preset, done: false });
