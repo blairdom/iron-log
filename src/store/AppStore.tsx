@@ -55,7 +55,7 @@ type Action =
   | { type: "ADD_SECTION"; dayKey: string }
   | { type: "REMOVE_SECTION"; dayKey: string; sectionId: string }
   | { type: "HYDRATE"; sessions: SessionRecord[]; cardioSessions: CardioSession[]; program: DayTemplate[]; adherenceRecords: AdherenceRecord[] }
-  | { type: "START_CARDIO_SESSION" }
+  | { type: "START_CARDIO_SESSION"; slot: "am" | "pm" }
   | { type: "UPDATE_CARDIO_FIELD"; field: "duration" | "speed"; value: number }
   | { type: "COMPLETE_CARDIO_SESSION" }
 
@@ -513,10 +513,12 @@ function reducer(state: AppState, action: Action): AppState {
 
     case "START_CARDIO_SESSION": {
       const today = toDateString();
-      const existing = state.cardioSessions.find(s => s.date === today);
+      const { slot } = action;
+      const existing = state.cardioSessions.find(s => s.date === today && s.slot === slot);
       const activeCardioSession: CardioSession = existing ?? {
-        id: `cardio-${today}`,
+        id: `cardio-${today}-${slot}`,
         date: today,
+        slot,
         duration: 20,
         speed: 3.5,
         status: "not_started",
@@ -541,7 +543,7 @@ function reducer(state: AppState, action: Action): AppState {
         completedAt: new Date().toISOString(),
       };
       const cardioSessions = [
-        ...state.cardioSessions.filter(s => s.date !== completed.date),
+        ...state.cardioSessions.filter(s => s.id !== completed.id),
         completed,
       ];
       saveCardioSessions(cardioSessions);

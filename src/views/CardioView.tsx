@@ -97,20 +97,22 @@ export default function CardioView({ onComplete, onBack }: Props) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
           <div style={{ ...label, marginTop: 0 }}>{todayFormatted}</div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginTop: 2, fontFamily: FONT }}>CARDIO</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginTop: 2, fontFamily: FONT }}>
+            CARDIO — {(activeCardioSession.slot ?? "am").toUpperCase()}
+          </div>
         </div>
         <div style={{
           fontSize: 11,
           fontWeight: 700,
           letterSpacing: "0.1em",
-          color: cardioBehavioral.todayStatus === "complete" ? "#22c55e" : "#888",
-          background: cardioBehavioral.todayStatus === "complete" ? "rgba(34,197,94,0.1)" : "#111",
-          border: `1px solid ${cardioBehavioral.todayStatus === "complete" ? "#1a3a1a" : "#222"}`,
+          color: cardioBehavioral.todayStatus === "complete" ? "#22c55e" : cardioBehavioral.todayStatus === "partial" ? "#eab308" : "#888",
+          background: cardioBehavioral.todayStatus === "complete" ? "rgba(34,197,94,0.1)" : cardioBehavioral.todayStatus === "partial" ? "rgba(234,179,8,0.1)" : "#111",
+          border: `1px solid ${cardioBehavioral.todayStatus === "complete" ? "#1a3a1a" : cardioBehavioral.todayStatus === "partial" ? "#3a3210" : "#222"}`,
           padding: "4px 10px",
           borderRadius: 3,
           fontFamily: FONT,
         }}>
-          {cardioBehavioral.todayStatus === "complete" ? "DONE" : "PENDING"}
+          {cardioBehavioral.todayStatus === "complete" ? "BOTH DONE" : cardioBehavioral.todayStatus === "partial" ? "HALF DONE" : "PENDING"}
         </div>
       </div>
 

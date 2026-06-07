@@ -4,7 +4,7 @@ import { threatLabel, threatMessage } from "../engine/behavioral";
 
 interface Props {
   onStartSession: () => void;
-  onLogCardio: () => void;
+  onLogCardio: (slot: "am" | "pm") => void;
 }
 
 export default function Dashboard({ onStartSession, onLogCardio }: Props) {
@@ -33,9 +33,9 @@ export default function Dashboard({ onStartSession, onLogCardio }: Props) {
   const badge = statusBadge();
 
   const cardioStatusColor = cardioBehavioral.todayStatus === "complete" ? "#22c55e"
-    : cardioBehavioral.todayStatus === "skipped" ? "#ef4444" : "#555";
-  const cardioStatusLabel = cardioBehavioral.todayStatus === "complete" ? "DONE"
-    : cardioBehavioral.todayStatus === "skipped" ? "MISSED" : "PENDING";
+    : cardioBehavioral.todayStatus === "partial" ? "#eab308" : "#555";
+  const cardioStatusLabel = cardioBehavioral.todayStatus === "complete" ? "BOTH DONE"
+    : cardioBehavioral.todayStatus === "partial" ? "HALF DONE" : "PENDING";
 
   return (
     <div style={screen(threatState)}>
@@ -144,28 +144,37 @@ export default function Dashboard({ onStartSession, onLogCardio }: Props) {
           </div>
         </div>
 
-        {cardioBehavioral.todayStatus !== "complete" && (
-          <button
-            style={{
-              width: "100%",
-              padding: 12,
-              background: cardioTc.glow,
-              border: `1px solid ${cardioTc.border}`,
-              borderRadius: 6,
-              color: cardioTc.accent,
-              fontSize: 13,
-              fontWeight: 700,
-              fontFamily: FONT,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              cursor: "pointer",
-              marginTop: 12,
-            }}
-            onClick={onLogCardio}
-          >
-            ▶ LOG CARDIO
-          </button>
-        )}
+        {/* AM / PM slot buttons */}
+        <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+          {(["am", "pm"] as const).map(slot => {
+            const slotStatus = slot === "am" ? cardioBehavioral.todayAmStatus : cardioBehavioral.todayPmStatus;
+            const done = slotStatus === "complete";
+            return (
+              <button
+                key={slot}
+                style={{
+                  flex: 1,
+                  padding: "10px 0",
+                  background: done ? "rgba(34,197,94,0.08)" : cardioTc.glow,
+                  border: `1px solid ${done ? "#1a3a1a" : cardioTc.border}`,
+                  borderRadius: 6,
+                  color: done ? "#22c55e" : cardioTc.accent,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  fontFamily: FONT,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  cursor: done ? "default" : "pointer",
+                  opacity: done ? 0.7 : 1,
+                }}
+                disabled={done}
+                onClick={() => !done && onLogCardio(slot)}
+              >
+                {done ? `✓ ${slot.toUpperCase()}` : `▶ LOG ${slot.toUpperCase()}`}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Recovery Mode Controls */}

@@ -47,13 +47,17 @@ export default function CalendarView() {
     return "none";
   }
 
-  function getCardioStatus(day: number): "complete" | "skipped" | "none" {
+  function getCardioStatus(day: number): "complete" | "partial" | "skipped" | "none" {
     const d = dateStr(day);
     if (d > today) return "none";
-    const s = cardioSessions.find(s => s.date === d);
-    if (!s) return "none";
-    if (s.status === "complete") return "complete";
-    if (s.status === "skipped") return "skipped";
+    const amSession = cardioSessions.find(s => s.date === d && s.slot === "am");
+    const pmSession = cardioSessions.find(s => s.date === d && s.slot === "pm");
+    // Legacy sessions without slot field default to "am"
+    const legacySession = cardioSessions.find(s => s.date === d && !s.slot);
+    const amDone = amSession?.status === "complete" || legacySession?.status === "complete";
+    const pmDone = pmSession?.status === "complete";
+    if (amDone && pmDone) return "complete";
+    if (amDone || pmDone) return "partial";
     return "none";
   }
 
@@ -76,15 +80,30 @@ export default function CalendarView() {
     ? Math.round(((strengthCompleted * 1.0 + strengthPartial * 0.5) / strengthScheduled) * 100)
     : 0;
 
-  const cardioDone    = weekCardio.filter(s => s.status === "complete").length;
-  const cardioMissed  = weekCardio.filter(s => s.status === "skipped").length;
-  // Days elapsed: count days with a logged cardio result (complete or skipped),
-  // plus today if it's already logged — never counts today as "elapsed" unless done.
-  const daysElapsed = weekCardio.filter(s =>
-    s.status === "complete" || s.status === "skipped"
-  ).length;
+  // Count unique dates in window
+  const weekDates: string[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    const ds = d.toISOString().split("T")[0];
+    if (ds <= today) weekDates.push(ds);
+  }
+  // Per-day credit: 0, 0.5, or 1.0
+  function dayCredit(d: string): number {
+    const am = weekCardio.find(s => s.date === d && (s.slot === "am" || !s.slot));
+    const pm = weekCardio.find(s => s.date === d && s.slot === "pm");
+    const amDone = am?.status === "complete" ? 1 : 0;
+    const pmDone = pm?.status === "complete" ? 1 : 0;
+    const n = amDone + pmDone;
+    return n === 2 ? 1.0 : n === 1 ? 0.5 : 0;
+  }
+  const cardioCreditSum = weekDates.reduce((sum, d) => sum + dayCredit(d), 0);
+  // "days done" = days with any credit; "days missed" = days with no credit (and elapsed)
+  const cardioDone    = weekDates.filter(d => dayCredit(d) > 0).length;
+  const cardioMissed  = weekDates.filter(d => dayCredit(d) === 0).length;
+  const daysElapsed   = weekDates.length;
   const cardioAdherence = daysElapsed > 0
-    ? Math.round((cardioDone / daysElapsed) * 100)
+    ? Math.round((cardioCreditSum / (daysElapsed * 1.0)) * 100)
     : 0;
 
   const cells: (number | null)[] = [
@@ -125,7 +144,8 @@ export default function CalendarView() {
           }
           const isFuture = dateStr(day) > today;
           const sc = STATUS_COLORS[getStrengthStatus(day)];
-          const cs = STATUS_COLORS[isFuture ? "future" : getCardioStatus(day)];
+          const cardioKey = isFuture ? "future" : getCardioStatus(day);
+          const cs = STATUS_COLORS[cardioKey === "partial" ? "partial" : cardioKey];
 
           return (
             <div
@@ -189,10 +209,11 @@ export default function CalendarView() {
           Cardio — This Week
         </div>
         {[
-          { label: "Days completed", value: String(cardioDone),       highlight: false },
-          { label: "Days missed",    value: String(cardioMissed),     highlight: cardioMissed > 0 },
-          { label: "Days elapsed",   value: String(daysElapsed),      highlight: false },
-          { label: "Adherence",      value: `${cardioAdherence}%`,   highlight: false },
+          { label: "Days with cardio", value: String(cardioDone),       highlight: false },
+          { label: "Days missed",      value: String(cardioMissed),     highlight: cardioMissed > 0 },
+          { label: "Days elapsed",     value: String(daysElapsed),      highlight: false },
+          { label: "Credit earned",    value: `${cardioCreditSum.toFixed(1)} / ${daysElapsed}`, highlight: false },
+          { label: "Adherence",        value: `${cardioAdherence}%`,    highlight: false },
         ].map(row => (
           <div key={row.label} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "1px solid #111", fontSize: 12, fontFamily: FONT }}>
             <span style={{ color: "#666" }}>{row.label}</span>

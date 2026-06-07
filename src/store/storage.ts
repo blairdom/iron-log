@@ -110,14 +110,14 @@ export function saveCardioSessions(sessions: CardioSession[]): void {
   save(KEYS.cardio, sessions);
 }
 
-// Seed data: May 25–30 completed, May 31 not yet started
+// Seed data: May 25–30 AM sessions completed
 const SEED_CARDIO: CardioSession[] = [
-  { id: "cardio-2026-05-25", date: "2026-05-25", duration: 20, speed: 3.5, status: "complete", completedAt: "2026-05-25T00:00:00.000Z" },
-  { id: "cardio-2026-05-26", date: "2026-05-26", duration: 20, speed: 3.5, status: "complete", completedAt: "2026-05-26T00:00:00.000Z" },
-  { id: "cardio-2026-05-27", date: "2026-05-27", duration: 20, speed: 3.5, status: "complete", completedAt: "2026-05-27T00:00:00.000Z" },
-  { id: "cardio-2026-05-28", date: "2026-05-28", duration: 20, speed: 3.5, status: "complete", completedAt: "2026-05-28T00:00:00.000Z" },
-  { id: "cardio-2026-05-29", date: "2026-05-29", duration: 20, speed: 3.5, status: "complete", completedAt: "2026-05-29T00:00:00.000Z" },
-  { id: "cardio-2026-05-30", date: "2026-05-30", duration: 20, speed: 3.5, status: "complete", completedAt: "2026-05-30T00:00:00.000Z" },
+  { id: "cardio-2026-05-25-am", date: "2026-05-25", slot: "am", duration: 20, speed: 3.5, status: "complete", completedAt: "2026-05-25T00:00:00.000Z" },
+  { id: "cardio-2026-05-26-am", date: "2026-05-26", slot: "am", duration: 20, speed: 3.5, status: "complete", completedAt: "2026-05-26T00:00:00.000Z" },
+  { id: "cardio-2026-05-27-am", date: "2026-05-27", slot: "am", duration: 20, speed: 3.5, status: "complete", completedAt: "2026-05-27T00:00:00.000Z" },
+  { id: "cardio-2026-05-28-am", date: "2026-05-28", slot: "am", duration: 20, speed: 3.5, status: "complete", completedAt: "2026-05-28T00:00:00.000Z" },
+  { id: "cardio-2026-05-29-am", date: "2026-05-29", slot: "am", duration: 20, speed: 3.5, status: "complete", completedAt: "2026-05-29T00:00:00.000Z" },
+  { id: "cardio-2026-05-30-am", date: "2026-05-30", slot: "am", duration: 20, speed: 3.5, status: "complete", completedAt: "2026-05-30T00:00:00.000Z" },
 ];
 
 const DEFAULT_GOALS: GoalRecord[] = [

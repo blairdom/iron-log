@@ -77,6 +77,7 @@ export interface GoalRecord {
 export interface CardioSession {
   id: string;
   date: string; // YYYY-MM-DD
+  slot: "am" | "pm";
   duration: number; // minutes
   speed: number;    // mph
   status: "complete" | "skipped" | "not_started";
@@ -87,7 +88,10 @@ export interface CardioBehavioralState {
   threatState: ThreatState;
   streak: number;
   adherenceRate: number;
-  todayStatus: "complete" | "skipped" | "not_started";
+  /** "complete" = both AM+PM done, "partial" = one done, "not_started" = neither */
+  todayStatus: "complete" | "partial" | "not_started";
+  todayAmStatus: "complete" | "skipped" | "not_started";
+  todayPmStatus: "complete" | "skipped" | "not_started";
 }
 
 export interface BehavioralState {

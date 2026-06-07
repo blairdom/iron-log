@@ -192,40 +192,69 @@ export function checkRecoveryModeAutoExit(
 
 // ─── Cardio Behavioral Engine ───────────────────────────────────────────────
 
+/** Returns the credit earned for a date: 0, 0.5, or 1.0 */
+function dayCardioCredit(sessions: CardioSession[], date: string): number {
+  const am = sessions.find(s => s.date === date && s.slot === "am");
+  const pm = sessions.find(s => s.date === date && s.slot === "pm");
+  const amDone = am?.status === "complete" ? 1 : 0;
+  const pmDone = pm?.status === "complete" ? 1 : 0;
+  const total = amDone + pmDone;
+  if (total === 2) return 1.0;
+  if (total === 1) return 0.5;
+  return 0.0;
+}
+
 export function computeCardioBehavioralState(
   sessions: CardioSession[],
   today: string
 ): CardioBehavioralState {
-  const sorted = [...sessions].sort((a, b) => b.date.localeCompare(a.date));
-
-  // Streak: consecutive completed days going backward from most recent
-  let streak = 0;
-  for (const s of sorted) {
-    if (s.date > today) continue; // ignore future
-    if (s.status === "complete") streak++;
-    else break;
+  // Streak: consecutive days (going backward) where at least 1 slot was completed
+  // Build unique list of past dates desc
+  const pastDates: string[] = [];
+  for (let i = 0; i < 90; i++) {
+    const d = dateSubDays(today, i);
+    if (!pastDates.includes(d)) pastDates.push(d);
   }
 
-  // Rolling 7-day adherence
-  const windowStart = dateSubDays(today, 6);
-  const window = sorted.filter(s => s.date >= windowStart && s.date <= today);
-  // Cardio is scheduled every day — 7 days in window
-  const windowDays = 7;
-  const completed = window.filter(s => s.status === "complete").length;
-  const adherenceRate = completed / windowDays;
+  let streak = 0;
+  for (const d of pastDates) {
+    const credit = dayCardioCredit(sessions, d);
+    if (credit > 0) streak++;
+    else break; // gap = streak ends
+  }
 
-  // Threat: based on consecutive skips in rolling window
-  const windowSkips = window.filter(s => s.status === "skipped").length;
+  // Rolling 7-day adherence: sum credits / 7
+  const windowStart = dateSubDays(today, 6);
+  let creditSum = 0;
+  for (let i = 0; i <= 6; i++) {
+    const d = dateSubDays(today, i);
+    if (d >= windowStart && d <= today) {
+      creditSum += dayCardioCredit(sessions, d);
+    }
+  }
+  const adherenceRate = creditSum / 7;
+
+  // Threat: days in 7-day window with zero credit (fully missed)
+  let zeroDays = 0;
+  for (let i = 0; i <= 6; i++) {
+    const d = dateSubDays(today, i);
+    if (dayCardioCredit(sessions, d) === 0) zeroDays++;
+  }
   let threatState: ThreatState;
-  if (windowSkips === 0) threatState = "green";
-  else if (windowSkips === 1) threatState = "yellow";
-  else if (windowSkips === 2) threatState = "orange";
+  if (zeroDays <= 1) threatState = "green";
+  else if (zeroDays === 2) threatState = "yellow";
+  else if (zeroDays === 3) threatState = "orange";
   else threatState = "red";
 
-  const todaySession = sessions.find(s => s.date === today);
-  const todayStatus = todaySession?.status ?? "not_started";
+  const todayAm = sessions.find(s => s.date === today && s.slot === "am");
+  const todayPm = sessions.find(s => s.date === today && s.slot === "pm");
+  const todayAmStatus = todayAm?.status ?? "not_started";
+  const todayPmStatus = todayPm?.status ?? "not_started";
 
-  return { threatState, streak, adherenceRate, todayStatus };
+  const doneCount = (todayAmStatus === "complete" ? 1 : 0) + (todayPmStatus === "complete" ? 1 : 0);
+  const todayStatus = doneCount === 2 ? "complete" : doneCount === 1 ? "partial" : "not_started";
+
+  return { threatState, streak, adherenceRate, todayStatus, todayAmStatus, todayPmStatus };
 }
 
 // ─── Goals Engine ────────────────────────────────────────────────────────────

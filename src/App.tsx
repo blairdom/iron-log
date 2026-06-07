@@ -12,6 +12,7 @@ import { useLayout } from "./components/useLayout";
 import type { ThreatState } from "./engine/types";
 
 type View = "dashboard" | "session" | "cardio" | "program" | "calendar" | "goals";
+type CardioSlot = "am" | "pm";
 
 const NAV_TABS: { key: View; label: string }[] = [
   { key: "dashboard", label: "Dashboard" },
@@ -54,8 +55,16 @@ function AppShell() {
     setView("session");
   }
 
-  function handleLogCardio() {
-    dispatch({ type: "START_CARDIO_SESSION" });
+  function handleLogCardio(slot: CardioSlot) {
+    dispatch({ type: "START_CARDIO_SESSION", slot });
+    setView("cardio");
+  }
+
+  function handleCardioTab() {
+    // Smart default: open AM if not done yet, otherwise PM
+    const { cardioBehavioral } = state;
+    const slot: CardioSlot = cardioBehavioral.todayAmStatus !== "complete" ? "am" : "pm";
+    dispatch({ type: "START_CARDIO_SESSION", slot });
     setView("cardio");
   }
 
@@ -85,7 +94,7 @@ function AppShell() {
         {/* Horizontal nav */}
         <nav style={{ display: "flex", background: "#111", borderBottom: "1px solid #1a1a1a", overflowX: "auto" as const }}>
           {NAV_TABS.map(tab => (
-            <button key={tab.key} onClick={() => setView(tab.key)} style={{
+            <button key={tab.key} onClick={() => tab.key === "cardio" ? handleCardioTab() : setView(tab.key)} style={{
               padding: "12px 12px",
               fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase",
               color: view === tab.key ? "#e0e0e0" : "#555",
@@ -147,7 +156,7 @@ function AppShell() {
         {/* Nav items */}
         <nav style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, padding: "0 12px" }}>
           {NAV_TABS.map(tab => (
-            <button key={tab.key} onClick={() => setView(tab.key)} style={{
+            <button key={tab.key} onClick={() => tab.key === "cardio" ? handleCardioTab() : setView(tab.key)} style={{
               padding: "10px 14px",
               fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase",
               color: view === tab.key ? "#e0e0e0" : "#555",
