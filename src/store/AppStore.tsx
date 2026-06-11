@@ -58,6 +58,8 @@ type Action =
   | { type: "START_CARDIO_SESSION"; slot: "am" | "pm" }
   | { type: "UPDATE_CARDIO_FIELD"; field: "duration" | "speed"; value: number }
   | { type: "COMPLETE_CARDIO_SESSION" }
+  | { type: "BACKFILL_STRENGTH"; date: string; dayKey: string; status: "complete" | "partial" | "skipped" | "none" }
+  | { type: "BACKFILL_CARDIO"; date: string; slot: "am" | "pm"; duration: number; speed: number; status: "complete" | "not_started" }
 
 const now = new Date();
 
@@ -550,6 +552,79 @@ function reducer(state: AppState, action: Action): AppState {
       pushCardioSessions(cardioSessions);
       const cardioBehavioral = computeCardioBehavioralState(cardioSessions, state.today);
       return { ...state, cardioSessions, cardioBehavioral, activeCardioSession: null };
+    }
+
+    case "BACKFILL_STRENGTH": {
+      const { date, dayKey, status } = action;
+      let sessions: SessionRecord[];
+      let adherenceRecords: AdherenceRecord[];
+
+      if (status === "none") {
+        // Clear the record entirely
+        sessions = state.sessions.filter(s => !(s.date === date && s.dayKey === dayKey));
+        adherenceRecords = state.adherenceRecords.filter(r => r.date !== date);
+      } else {
+        const existing = state.sessions.find(s => s.date === date && s.dayKey === dayKey);
+        const day = state.program.find(d => d.key === dayKey);
+        const session: SessionRecord = existing
+          ? { ...existing, status, completedAt: existing.completedAt ?? new Date().toISOString() }
+          : {
+              id: `session-${date}-${dayKey}`,
+              date, dayKey,
+              dayType: day?.name ?? dayKey,
+              status,
+              salvageType: null,
+              exercises: [],
+              summary: { exerciseCount: 0, totalSets: 0, totalVolume: 0 },
+              startedAt: null,
+              completedAt: new Date().toISOString(),
+            };
+        sessions = [
+          ...state.sessions.filter(s => !(s.date === date && s.dayKey === dayKey)),
+          session,
+        ];
+        const av = status === "complete" ? 1.0 : status === "partial" ? 0.5 : 0;
+        const adherenceRec: AdherenceRecord = {
+          date,
+          scheduled: isScheduledDay(dayKey),
+          completed: status !== "skipped",
+          partial: status === "partial",
+          adherenceValue: av,
+          threatState: state.behavioral.threatState,
+          recoveryMode: state.recoveryMode.active,
+          plannedAbsence: false,
+        };
+        adherenceRecords = [
+          ...state.adherenceRecords.filter(r => r.date !== date),
+          adherenceRec,
+        ];
+      }
+
+      const behavioral = computeBehavioralState(sessions, adherenceRecords, state.recoveryMode, state.goals, state.today);
+      const goals = computeGoals(state.goals, sessions, adherenceRecords, behavioral.streak, state.today);
+      saveSessions(sessions);
+      saveAdherence(adherenceRecords);
+      saveGoals(goals);
+      pushSessions(sessions);
+      pushAdherence(adherenceRecords);
+      return { ...state, sessions, adherenceRecords, behavioral, goals };
+    }
+
+    case "BACKFILL_CARDIO": {
+      const { date, slot, duration, speed, status } = action;
+      const id = `cardio-${date}-${slot}`;
+      const session: CardioSession = {
+        id, date, slot, duration, speed, status,
+        completedAt: status === "complete" ? new Date().toISOString() : null,
+      };
+      const cardioSessions = [
+        ...state.cardioSessions.filter(s => s.id !== id),
+        session,
+      ];
+      saveCardioSessions(cardioSessions);
+      pushCardioSessions(cardioSessions);
+      const cardioBehavioral = computeCardioBehavioralState(cardioSessions, state.today);
+      return { ...state, cardioSessions, cardioBehavioral };
     }
 
     default:
