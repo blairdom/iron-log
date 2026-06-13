@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useApp } from "../store/AppStore";
-import { FONT, screen, sectionHeader, addBtn, dropdown, card, label } from "../components/theme";
+import { FONT, screen, sectionHeader, addBtn, dropdown, card, label, SURFACE, SURFACE_2, BORDER, BORDER_SUBTLE, TEXT_PRIMARY, TEXT_MUTED, TEXT_DIM, BASE_BG } from "../components/theme";
 import { EXERCISES } from "../data/exercises";
 import type { SalvageType } from "../engine/types";
 
@@ -139,7 +139,7 @@ export default function SessionView({ onComplete, onBack }: Props) {
   if (!activeSession) {
     return (
       <div style={screen(null)}>
-        <div style={{ color: "#555", fontFamily: FONT, fontSize: 13 }}>No active session.</div>
+        <div style={{ color: TEXT_DIM, fontFamily: FONT, fontSize: 13 }}>No active session.</div>
         <button style={{ ...addBtn, marginTop: 16 }} onClick={onBack}>← BACK</button>
       </div>
     );
@@ -183,12 +183,12 @@ export default function SessionView({ onComplete, onBack }: Props) {
       {/* ── Header with session timer ── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
-          <div style={{ fontSize: 11, color: "#555", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600, fontFamily: FONT }}>{dayLabel}</div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginTop: 2, fontFamily: FONT }}>{activeSession.dayType}</div>
+          <div style={{ fontSize: 11, color: TEXT_DIM, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600, fontFamily: FONT }}>{dayLabel}</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: TEXT_PRIMARY, marginTop: 2, fontFamily: FONT }}>{activeSession.dayType}</div>
         </div>
         <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: 10, color: "#444", fontFamily: FONT, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Session</div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: "#fff", fontFamily: FONT, letterSpacing: "0.05em" }}>{fmt(sessionElapsed)}</div>
+          <div style={{ fontSize: 10, color: TEXT_DIM, fontFamily: FONT, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>Session</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: TEXT_PRIMARY, fontFamily: FONT, letterSpacing: "0.05em" }}>{fmt(sessionElapsed)}</div>
         </div>
       </div>
 
@@ -197,9 +197,9 @@ export default function SessionView({ onComplete, onBack }: Props) {
         {(["abbreviated", "mobility", "emergency"] as SalvageType[]).map(t => (
           <button key={t as string} style={{
             padding: "8px 10px", fontSize: 10, fontWeight: 600, letterSpacing: "0.05em",
-            background: salvageActive === t ? "#1a1a1a" : "#111",
-            border: salvageActive === t ? "1px solid #555" : "1px solid #333",
-            borderRadius: 4, color: salvageActive === t ? "#e0e0e0" : "#888",
+            background: salvageActive === t ? SURFACE_2 : SURFACE,
+            border: salvageActive === t ? `1px solid ${BORDER}` : `1px solid ${BORDER_SUBTLE}`,
+            borderRadius: 6, color: salvageActive === t ? TEXT_PRIMARY : TEXT_MUTED,
             cursor: "pointer", fontFamily: FONT, textTransform: "uppercase",
           }} onClick={() => handleSalvage(salvageActive === t ? null : t)}>
             {t === "emergency" ? "10-MIN" : t!.toUpperCase()}
@@ -237,12 +237,12 @@ export default function SessionView({ onComplete, onBack }: Props) {
               <div key={absIdx}>
                 {/* Exercise row */}
                 <div
-                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid #111", opacity: isDone ? 0.4 : 1, cursor: "pointer" }}
+                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${BORDER_SUBTLE}`, opacity: isDone ? 0.4 : 1, cursor: "pointer" }}
                   onClick={() => setExpanded(isExpanded ? null : absIdx)}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, fontSize: 13, color: "#e0e0e0", fontFamily: FONT }}>{isDone ? "✓ " : ""}{ex.name}</div>
-                    <div style={{ fontSize: 10, color: "#555", marginTop: 2, letterSpacing: "0.05em", fontFamily: FONT }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: TEXT_PRIMARY, fontFamily: FONT }}>{isDone ? "✓ " : ""}{ex.name}</div>
+                    <div style={{ fontSize: 10, color: TEXT_DIM, marginTop: 2, letterSpacing: "0.05em", fontFamily: FONT }}>
                       {EXERCISES.find(e => e.id === ex.exerciseId)?.subTarget ?? ""}
                     </div>
                   </div>
@@ -261,7 +261,7 @@ export default function SessionView({ onComplete, onBack }: Props) {
                     {isRestDone && (
                       <div style={{ fontSize: 11, color: "#ef4444", fontFamily: FONT, fontWeight: 700 }}>GO</div>
                     )}
-                    <div style={{ fontSize: 11, color: "#888", background: "#1a1a1a", padding: "4px 10px", borderRadius: 3, fontFamily: FONT }}>
+                    <div style={{ fontSize: 11, color: TEXT_MUTED, background: SURFACE_2, padding: "4px 10px", borderRadius: 6, fontFamily: FONT }}>
                       {ex.sets.length} sets
                     </div>
                     <button
@@ -275,11 +275,11 @@ export default function SessionView({ onComplete, onBack }: Props) {
 
                 {/* Expanded section */}
                 {isExpanded && (
-                  <div style={{ padding: "8px 0 12px", borderBottom: "1px solid #1a1a1a" }}>
+                  <div style={{ padding: "8px 0 12px", borderBottom: `1px solid ${BORDER_SUBTLE}` }}>
 
                     {/* Swap */}
                     <div style={{ marginBottom: 10 }}>
-                      <div style={{ fontSize: 10, color: "#555", fontFamily: FONT, letterSpacing: "0.1em", marginBottom: 4, textTransform: "uppercase" }}>Swap for today</div>
+                      <div style={{ fontSize: 10, color: TEXT_DIM, fontFamily: FONT, letterSpacing: "0.1em", marginBottom: 4, textTransform: "uppercase" }}>Swap for today</div>
                       <select style={dropdown} value={ex.exerciseId} onChange={e => handleSwap(absIdx, e.target.value)}>
                         {compatibleExs.map(ce => <option key={ce.id} value={ce.id}>{ce.name}</option>)}
                       </select>
@@ -292,15 +292,15 @@ export default function SessionView({ onComplete, onBack }: Props) {
 
                       return (
                         <div key={setIdx} style={{ display: "flex", gap: 10, padding: "6px 0", fontSize: 12, color: "#999", alignItems: "center", fontFamily: FONT }}>
-                          <div style={{ width: 18, color: "#444", fontSize: 10, fontWeight: 700 }}>{setIdx + 1}</div>
+                          <div style={{ width: 18, color: TEXT_DIM, fontSize: 10, fontWeight: 700 }}>{setIdx + 1}</div>
                           <input type="number" value={set.reps}
-                            style={{ background: "#111", border: "1px solid #222", borderRadius: 3, padding: "6px 8px", color: "#e0e0e0", fontFamily: FONT, fontSize: 13, fontWeight: 600, width: 52, textAlign: "center" }}
+                            style={{ background: SURFACE_2, border: `1px solid ${BORDER}`, borderRadius: 6, padding: "6px 8px", color: TEXT_PRIMARY, fontFamily: FONT, fontSize: 13, fontWeight: 600, width: 52, textAlign: "center" }}
                             onChange={e => handleUpdateSet(absIdx, setIdx, "reps", parseInt(e.target.value) || 0)}
                             onBlur={e => trimLeadingZeros(absIdx, setIdx, "reps", e.target.value)}
                             onClick={e => e.stopPropagation()} />
                           <div style={{ fontSize: 10, color: "#555", width: 22 }}>reps</div>
                           <input type="number" value={set.weight}
-                            style={{ background: "#111", border: "1px solid #222", borderRadius: 3, padding: "6px 8px", color: "#e0e0e0", fontFamily: FONT, fontSize: 13, fontWeight: 600, width: 52, textAlign: "center" }}
+                            style={{ background: SURFACE_2, border: `1px solid ${BORDER}`, borderRadius: 6, padding: "6px 8px", color: TEXT_PRIMARY, fontFamily: FONT, fontSize: 13, fontWeight: 600, width: 52, textAlign: "center" }}
                             onChange={e => handleUpdateSet(absIdx, setIdx, "weight", parseInt(e.target.value) || 0)}
                             onBlur={e => trimLeadingZeros(absIdx, setIdx, "weight", e.target.value)}
                             onClick={e => e.stopPropagation()} />
@@ -315,7 +315,7 @@ export default function SessionView({ onComplete, onBack }: Props) {
                           </button>
 
                           {ex.sets.length > 1 && (
-                            <button style={{ background: "none", border: "none", color: "#444", cursor: "pointer", fontSize: 14, padding: "0 4px", fontFamily: FONT, lineHeight: 1 }}
+                            <button style={{ background: "none", border: "none", color: TEXT_DIM, cursor: "pointer", fontSize: 14, padding: "0 4px", fontFamily: FONT, lineHeight: 1 }}
                               onClick={e => { e.stopPropagation(); handleRemoveSet(absIdx, setIdx); }}>✕</button>
                           )}
                         </div>
@@ -325,9 +325,9 @@ export default function SessionView({ onComplete, onBack }: Props) {
                     <button style={{ ...addBtn, marginTop: 8 }} onClick={e => { e.stopPropagation(); handleAddSet(absIdx); }}>+ ADD SET</button>
 
                     {/* ── Rest timer ── */}
-                    <div style={{ marginTop: 12, padding: "10px 12px", background: "#0f0f0f", border: `1px solid ${isRestRunning || isRestDone ? restColor : "#1a1a1a"}`, borderRadius: 5 }}>
+                    <div style={{ marginTop: 12, padding: "10px 12px", background: SURFACE, border: `1px solid ${isRestRunning || isRestDone ? restColor : BORDER_SUBTLE}`, borderRadius: 8 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div style={{ fontSize: 10, color: "#444", fontFamily: FONT, letterSpacing: "0.1em", textTransform: "uppercase" }}>Rest Timer</div>
+                        <div style={{ fontSize: 10, color: TEXT_DIM, fontFamily: FONT, letterSpacing: "0.1em", textTransform: "uppercase" }}>Rest Timer</div>
                         {(isRestRunning || isRestDone) && (
                           <div style={{ fontSize: 20, fontWeight: 700, color: restColor, fontFamily: FONT }}>
                             {isRestDone ? "GO!" : fmt(restTimer!.remaining)}
@@ -337,7 +337,7 @@ export default function SessionView({ onComplete, onBack }: Props) {
 
                       {/* Progress bar */}
                       {isRestRunning && (
-                        <div style={{ height: 3, background: "#1a1a1a", borderRadius: 2, marginTop: 6, overflow: "hidden" }}>
+                        <div style={{ height: 3, background: BORDER_SUBTLE, borderRadius: 2, marginTop: 6, overflow: "hidden" }}>
                           <div style={{ height: "100%", width: `${(restTimer!.remaining / restTimer!.total) * 100}%`, background: restColor, borderRadius: 2, transition: "width 1s linear" }} />
                         </div>
                       )}
@@ -357,7 +357,7 @@ export default function SessionView({ onComplete, onBack }: Props) {
                         {/* Preset adjustment */}
                         <div style={{ display: "flex", gap: 4, alignItems: "center", marginLeft: "auto" }}>
                           <button style={{ ...addBtn, padding: "4px 8px", fontSize: 11 }} onClick={() => adjustRestPreset(absIdx, -15)}>−15s</button>
-                          <div style={{ fontSize: 11, color: "#555", fontFamily: FONT, width: 36, textAlign: "center" }}>{fmt(restPreset)}</div>
+                          <div style={{ fontSize: 11, color: TEXT_DIM, fontFamily: FONT, width: 36, textAlign: "center" }}>{fmt(restPreset)}</div>
                           <button style={{ ...addBtn, padding: "4px 8px", fontSize: 11 }} onClick={() => adjustRestPreset(absIdx, 15)}>+15s</button>
                         </div>
                       </div>
@@ -374,17 +374,17 @@ export default function SessionView({ onComplete, onBack }: Props) {
       <div style={{ ...card, marginTop: 24 }}>
         <div style={label}>Session Summary</div>
         <div style={{ display: "flex", gap: 20, marginTop: 8, fontFamily: FONT }}>
-          <div><span style={{ color: "#fff", fontWeight: 700 }}>{summary.exerciseCount}</span>{" "}<span style={{ color: "#555", fontSize: 11 }}>exercises</span></div>
-          <div><span style={{ color: "#fff", fontWeight: 700 }}>{summary.totalSets}</span>{" "}<span style={{ color: "#555", fontSize: 11 }}>sets</span></div>
-          <div><span style={{ color: "#fff", fontWeight: 700 }}>{summary.totalVolume.toLocaleString()}</span>{" "}<span style={{ color: "#555", fontSize: 11 }}>lbs vol</span></div>
-          <div><span style={{ color: "#fff", fontWeight: 700 }}>{fmt(sessionElapsed)}</span>{" "}<span style={{ color: "#555", fontSize: 11 }}>total</span></div>
+          <div><span style={{ color: TEXT_PRIMARY, fontWeight: 700 }}>{summary.exerciseCount}</span>{" "}<span style={{ color: TEXT_DIM, fontSize: 11 }}>exercises</span></div>
+          <div><span style={{ color: TEXT_PRIMARY, fontWeight: 700 }}>{summary.totalSets}</span>{" "}<span style={{ color: TEXT_DIM, fontSize: 11 }}>sets</span></div>
+          <div><span style={{ color: TEXT_PRIMARY, fontWeight: 700 }}>{summary.totalVolume.toLocaleString()}</span>{" "}<span style={{ color: TEXT_DIM, fontSize: 11 }}>lbs vol</span></div>
+          <div><span style={{ color: TEXT_PRIMARY, fontWeight: 700 }}>{fmt(sessionElapsed)}</span>{" "}<span style={{ color: TEXT_DIM, fontSize: 11 }}>total</span></div>
         </div>
       </div>
 
       {/* Complete / Flub */}
-      <button style={{ width: "100%", padding: 16, background: "rgba(34,197,94,0.15)", border: "1px solid #1a3a1a", borderRadius: 6, color: "#22c55e", fontSize: 14, fontWeight: 700, fontFamily: FONT, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", marginTop: 20 }}
+      <button style={{ width: "100%", padding: 16, background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 10, color: "#22c55e", fontSize: 13, fontWeight: 700, fontFamily: FONT, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer", marginTop: 20 }}
         onClick={handleCompleteSession}>✓ COMPLETE SESSION</button>
-      <button style={{ width: "100%", padding: 12, background: "#111", border: "1px solid #222", borderRadius: 6, color: "#555", fontSize: 12, fontWeight: 600, fontFamily: FONT, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", marginTop: 8, marginBottom: 40 }}
+      <button style={{ width: "100%", padding: 12, background: "transparent", border: `1px solid ${BORDER_SUBTLE}`, borderRadius: 8, color: TEXT_DIM, fontSize: 11, fontWeight: 600, fontFamily: FONT, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", marginTop: 8, marginBottom: 40 }}
         onClick={handleFlubSession}>FLUB — I PHONED IT IN</button>
     </div>
   );

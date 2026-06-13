@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useApp } from "../store/AppStore";
-import { FONT, screen, sectionHeader, addBtn, dropdown, label } from "../components/theme";
+import { FONT, screen, sectionHeader, addBtn, dropdown, label, SURFACE, SURFACE_2, BORDER, BORDER_SUBTLE, TEXT_PRIMARY, TEXT_MUTED, TEXT_DIM } from "../components/theme";
 import { EXERCISES } from "../data/exercises";
 import type { SlotSet } from "../data/program";
 
@@ -55,7 +55,7 @@ export default function ProgramEditor() {
 
   return (
     <div style={screen(null)}>
-      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", color: "#666", textTransform: "uppercase", fontFamily: FONT }}>
+      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", color: TEXT_MUTED, textTransform: "uppercase", fontFamily: FONT }}>
         Program
       </div>
 
@@ -68,10 +68,10 @@ export default function ProgramEditor() {
             style={{
               padding: "8px 14px",
               fontSize: 11, fontWeight: 700, fontFamily: FONT, letterSpacing: "0.1em",
-              background: activeDay === d.key ? "#222" : "#111",
-              border: activeDay === d.key ? "1px solid #444" : "1px solid #222",
-              borderRadius: 4,
-              color: activeDay === d.key ? "#fff" : "#555",
+              background: activeDay === d.key ? SURFACE_2 : SURFACE,
+              border: activeDay === d.key ? `1px solid ${BORDER}` : `1px solid ${BORDER_SUBTLE}`,
+              borderRadius: 8,
+              color: activeDay === d.key ? TEXT_PRIMARY : TEXT_DIM,
               cursor: "pointer", textTransform: "uppercase",
             }}
           >
@@ -82,7 +82,7 @@ export default function ProgramEditor() {
 
       {day && (
         <div style={{ marginTop: 4 }}>
-          <div style={{ fontSize: 18, fontWeight: 700, color: "#fff", fontFamily: FONT, marginBottom: 16, marginTop: 12 }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: TEXT_PRIMARY, fontFamily: FONT, marginBottom: 16, marginTop: 12 }}>
             {day.name}
           </div>
 
@@ -116,15 +116,15 @@ export default function ProgramEditor() {
                       onClick={() => toggleSlot(slot.id)}
                     >
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: "#e0e0e0", fontFamily: FONT }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_PRIMARY, fontFamily: FONT }}>
                           {ex?.name ?? "Unknown"}
                         </div>
-                        <div style={{ fontSize: 11, color: "#555", marginTop: 2, fontFamily: FONT }}>
+                        <div style={{ fontSize: 11, color: TEXT_DIM, marginTop: 2, fontFamily: FONT }}>
                           {setsLabel(slotSets)}
                         </div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                        <div style={{ fontSize: 11, color: "#444", fontFamily: FONT }}>{isEditing ? "▲" : "▼"}</div>
+                        <div style={{ fontSize: 11, color: TEXT_DIM, fontFamily: FONT }}>{isEditing ? "▲" : "▼"}</div>
                         <button
                           style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: 16, padding: "4px 6px", fontFamily: FONT, lineHeight: 1 }}
                           title="Remove exercise"
@@ -173,7 +173,7 @@ export default function ProgramEditor() {
                             <input
                               type="number"
                               value={slot.restSeconds ?? 90}
-                              style={{ background: "#111", border: "1px solid #222", borderRadius: 3, padding: "6px 8px", color: "#e0e0e0", fontFamily: FONT, fontSize: 13, fontWeight: 600, width: 64, textAlign: "center" }}
+                              style={{ background: SURFACE_2, border: `1px solid ${BORDER}`, borderRadius: 6, padding: "6px 8px", color: TEXT_PRIMARY, fontFamily: FONT, fontSize: 13, fontWeight: 600, width: 64, textAlign: "center" }}
                               onChange={e => {
                                 const val = parseInt(e.target.value) || 60;
                                 const program = state.program.map(d => d.key !== activeDay ? d : {
@@ -186,8 +186,8 @@ export default function ProgramEditor() {
                                 dispatch({ type: "UPDATE_PROGRAM", program });
                               }}
                             />
-                            <div style={{ fontSize: 11, color: "#555", fontFamily: FONT }}>seconds</div>
-                            <div style={{ fontSize: 11, color: "#444", fontFamily: FONT }}>
+                            <div style={{ fontSize: 11, color: TEXT_DIM, fontFamily: FONT }}>seconds</div>
+                            <div style={{ fontSize: 11, color: TEXT_DIM, fontFamily: FONT }}>
                               ({Math.floor((slot.restSeconds ?? 90) / 60)}:{String((slot.restSeconds ?? 90) % 60).padStart(2, "0")} min)
                             </div>
                           </div>
@@ -201,17 +201,17 @@ export default function ProgramEditor() {
                             <input
                               type="number"
                               value={set.reps}
-                              style={{ background: "#111", border: "1px solid #222", borderRadius: 3, padding: "6px 8px", color: "#e0e0e0", fontFamily: FONT, fontSize: 13, fontWeight: 600, width: 52, textAlign: "center" }}
+                              style={{ background: SURFACE_2, border: `1px solid ${BORDER}`, borderRadius: 6, padding: "6px 8px", color: TEXT_PRIMARY, fontFamily: FONT, fontSize: 13, fontWeight: 600, width: 52, textAlign: "center" }}
                               onChange={e => updateDefaultSet(section.id, slot.id, slotSets, setIdx, "reps", parseInt(e.target.value) || 0)}
                             />
-                            <div style={{ fontSize: 10, color: "#555", fontFamily: FONT }}>reps</div>
+                            <div style={{ fontSize: 10, color: TEXT_DIM, fontFamily: FONT }}>reps</div>
                             <input
                               type="number"
                               value={set.weight}
-                              style={{ background: "#111", border: "1px solid #222", borderRadius: 3, padding: "6px 8px", color: "#e0e0e0", fontFamily: FONT, fontSize: 13, fontWeight: 600, width: 52, textAlign: "center" }}
+                              style={{ background: SURFACE_2, border: `1px solid ${BORDER}`, borderRadius: 6, padding: "6px 8px", color: TEXT_PRIMARY, fontFamily: FONT, fontSize: 13, fontWeight: 600, width: 52, textAlign: "center" }}
                               onChange={e => updateDefaultSet(section.id, slot.id, slotSets, setIdx, "weight", parseInt(e.target.value) || 0)}
                             />
-                            <div style={{ fontSize: 10, color: "#555", fontFamily: FONT }}>
+                            <div style={{ fontSize: 10, color: TEXT_DIM, fontFamily: FONT }}>
                               {set.unit === "bw" ? "bw" : "lbs"}
                             </div>
                             {slotSets.length > 1 && (
