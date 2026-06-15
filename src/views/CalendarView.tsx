@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type React from "react";
 import { useApp } from "../store/AppStore";
 import { FONT, screen, card } from "../components/theme";
 
@@ -49,6 +50,18 @@ function MiniStepper({
   );
 }
 
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: "#555", marginBottom: 8, fontFamily: FONT }}>
+      {children}
+    </div>
+  );
+}
+
+function Divider() {
+  return <div style={{ borderTop: "1px solid #1a1a1a", margin: "14px 0" }} />;
+}
+
 function DayEditPanel({ date, onClose }: { date: string; onClose: () => void }) {
   const { state, dispatch } = useApp();
   const { sessions, cardioSessions } = state;
@@ -91,24 +104,74 @@ function DayEditPanel({ date, onClose }: { date: string; onClose: () => void }) 
     { value: "none",     label: "Clear",    color: "#555",    bg: "#111"                   },
   ];
 
+  const hasExercises = (existingSession?.exercises?.length ?? 0) > 0;
+
   return (
     <div style={{ ...card, marginTop: 12, border: "1px solid #2a2a2a", padding: 16 }}>
+
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "#e0e0e0", fontFamily: FONT }}>{dateFormatted}</div>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#e0e0e0", fontFamily: FONT }}>{dateFormatted}</div>
+          {existingSession?.dayType && (
+            <div style={{ fontSize: 11, color: "#555", fontFamily: FONT, marginTop: 2 }}>{existingSession.dayType}</div>
+          )}
+        </div>
         <button
           onClick={onClose}
           style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: 20, fontFamily: FONT, lineHeight: 1, padding: "0 4px" }}
         >✕</button>
       </div>
 
-      {/* Strength section — weekdays only */}
+      {/* ── STRENGTH LOG ── */}
       {isWeekday && (
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: "#555", marginBottom: 8, fontFamily: FONT }}>
-            Strength
-          </div>
-          <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ marginBottom: 4 }}>
+          <SectionLabel>Strength</SectionLabel>
+
+          {/* Workout log — shown when exercises were recorded */}
+          {hasExercises ? (
+            <div style={{ marginBottom: 12 }}>
+              {existingSession!.exercises.map((ex, ei) => (
+                <div key={ei} style={{ marginBottom: 10 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: ex.completed ? "#e0e0e0" : "#555", fontFamily: FONT }}>
+                      {ex.name}
+                    </div>
+                    {ex.isSessionSwap && (
+                      <div style={{ fontSize: 9, color: "#444", fontFamily: FONT, letterSpacing: "0.08em" }}>SWAPPED</div>
+                    )}
+                  </div>
+                  {ex.sets.map((set, si) => (
+                    <div key={si} style={{ display: "flex", gap: 12, alignItems: "center", padding: "3px 0 3px 10px" }}>
+                      <div style={{ fontSize: 10, color: "#444", fontFamily: FONT, width: 16 }}>
+                        {si + 1}
+                      </div>
+                      <div style={{ fontSize: 12, color: "#999", fontFamily: FONT }}>
+                        {set.reps} reps
+                        {set.unit !== "bw" && set.weight > 0 && (
+                          <span style={{ color: "#666" }}> @ {set.weight} {set.unit}</span>
+                        )}
+                        {set.unit === "bw" && <span style={{ color: "#555" }}> (bw)</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+              {existingSession!.summary.totalVolume > 0 && (
+                <div style={{ fontSize: 11, color: "#444", fontFamily: FONT, paddingTop: 6, borderTop: "1px solid #111" }}>
+                  {existingSession!.summary.totalSets} sets · {existingSession!.summary.totalVolume.toLocaleString()} lbs total volume
+                </div>
+              )}
+              <Divider />
+            </div>
+          ) : existingSession && existingSession.status !== "not_started" ? (
+            <div style={{ fontSize: 12, color: "#444", fontFamily: FONT, marginBottom: 12, fontStyle: "italic" }}>
+              {existingSession.status === "skipped" ? "Session skipped — no exercise data." : "No exercise detail recorded."}
+            </div>
+          ) : null}
+
+          {/* Status edit buttons */}
+          <div style={{ display: "flex", gap: 6, marginBottom: 4 }}>
             {strengthOptions.map(opt => (
               <button
                 key={opt.value}
@@ -117,7 +180,7 @@ function DayEditPanel({ date, onClose }: { date: string; onClose: () => void }) 
                   flex: 1, padding: "8px 0",
                   fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase",
                   fontFamily: FONT, borderRadius: 4, cursor: "pointer",
-                  border: strengthStatus === opt.value ? `1px solid ${opt.color}33` : "1px solid #1a1a1a",
+                  border: strengthStatus === opt.value ? `1px solid ${opt.color}55` : "1px solid #1a1a1a",
                   background: strengthStatus === opt.value ? opt.bg : "#0e0e0e",
                   color: strengthStatus === opt.value ? opt.color : "#444",
                 }}
@@ -129,21 +192,22 @@ function DayEditPanel({ date, onClose }: { date: string; onClose: () => void }) 
         </div>
       )}
 
-      {/* Cardio AM + PM */}
+      <Divider />
+
+      {/* ── CARDIO LOG ── */}
       {(["am", "pm"] as const).map(slot => {
-        const done     = slot === "am" ? amDone : pmDone;
-        const setDone  = slot === "am" ? setAmDone : setPmDone;
-        const duration = slot === "am" ? amDuration : pmDuration;
-        const setDur   = slot === "am" ? setAmDuration : setPmDuration;
-        const speed    = slot === "am" ? amSpeed : pmSpeed;
-        const setSpd   = slot === "am" ? setAmSpeed : setPmSpeed;
+        const existing  = slot === "am" ? existingAm : existingPm;
+        const done      = slot === "am" ? amDone : pmDone;
+        const setDone   = slot === "am" ? setAmDone : setPmDone;
+        const duration  = slot === "am" ? amDuration : pmDuration;
+        const setDur    = slot === "am" ? setAmDuration : setPmDuration;
+        const speed     = slot === "am" ? amSpeed : pmSpeed;
+        const setSpd    = slot === "am" ? setAmSpeed : setPmSpeed;
 
         return (
-          <div key={slot} style={{ marginBottom: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: done ? 10 : 0 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: "#555", fontFamily: FONT }}>
-                Cardio {slot.toUpperCase()}
-              </div>
+          <div key={slot} style={{ marginBottom: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+              <SectionLabel>Cardio {slot.toUpperCase()}</SectionLabel>
               <button
                 onClick={() => setDone(!done)}
                 style={{
@@ -153,11 +217,19 @@ function DayEditPanel({ date, onClose }: { date: string; onClose: () => void }) 
                   border: done ? "1px solid #1a3a1a" : "1px solid #222",
                   background: done ? "rgba(34,197,94,0.12)" : "#111",
                   color: done ? "#22c55e" : "#444",
+                  marginBottom: 8,
                 }}
               >
                 {done ? "✓ Done" : "Mark Done"}
               </button>
             </div>
+
+            {/* Previously logged stats */}
+            {existing?.status === "complete" && !done && (
+              <div style={{ fontSize: 12, color: "#444", fontFamily: FONT, marginBottom: 6, fontStyle: "italic" }}>
+                Logged: {existing.duration} min @ {existing.speed} mph
+              </div>
+            )}
 
             {done && (
               <div style={{ display: "flex", gap: 20, alignItems: "center", paddingLeft: 4 }}>
@@ -165,6 +237,10 @@ function DayEditPanel({ date, onClose }: { date: string; onClose: () => void }) 
                 <div style={{ width: 1, height: 40, background: "#1a1a1a" }} />
                 <MiniStepper value={speed} onChange={setSpd} step={0.1} min={0.5} unit="mph" />
               </div>
+            )}
+
+            {!done && !existing && (
+              <div style={{ fontSize: 11, color: "#333", fontFamily: FONT, fontStyle: "italic" }}>Not logged</div>
             )}
           </div>
         );
@@ -174,7 +250,7 @@ function DayEditPanel({ date, onClose }: { date: string; onClose: () => void }) 
       <button
         onClick={save}
         style={{
-          width: "100%", padding: 12, marginTop: 8,
+          width: "100%", padding: 12, marginTop: 4,
           background: "rgba(34,197,94,0.08)", border: "1px solid #1a3a1a",
           borderRadius: 6, color: "#22c55e", fontSize: 13, fontWeight: 700,
           fontFamily: FONT, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer",
