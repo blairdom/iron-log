@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type React from "react";
 import { useApp } from "../store/AppStore";
-import { FONT, screen, card } from "../components/theme";
+import { FONT, screen, card, SURFACE, SURFACE_2, BORDER, BORDER_SUBTLE, TEXT_PRIMARY, TEXT_MUTED, TEXT_DIM } from "../components/theme";
 
 function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();
@@ -20,14 +20,26 @@ function dayKeyFromDate(dateStr: string): string {
 const WEEKDAYS = ["mon", "tue", "wed", "thu", "fri"];
 
 const STATUS_COLORS = {
-  complete: { bg: "rgba(34,197,94,0.2)",  border: "#1a3a1a", color: "#22c55e" },
-  partial:  { bg: "rgba(234,179,8,0.15)", border: "#3a3210", color: "#eab308" },
-  skipped:  { bg: "rgba(239,68,68,0.15)", border: "#3a1010", color: "#ef4444" },
-  none:     { bg: "#111",                 border: "#1a1a1a", color: "#555"    },
-  future:   { bg: "#0e0e0e",              border: "#111",    color: "#333"    },
+  complete: { bg: "rgba(34,197,94,0.2)",  border: "rgba(34,197,94,0.3)",  color: "#22c55e" },
+  partial:  { bg: "rgba(234,179,8,0.15)", border: "rgba(234,179,8,0.3)",  color: "#eab308" },
+  skipped:  { bg: "rgba(239,68,68,0.15)", border: "rgba(239,68,68,0.3)",  color: "#ef4444" },
+  none:     { bg: SURFACE_2,              border: BORDER_SUBTLE,           color: TEXT_DIM  },
+  future:   { bg: "#0e0e0e",              border: BORDER_SUBTLE,           color: "#2a2a2a" },
 };
 
-// ── Day Edit Panel ────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: TEXT_DIM, marginBottom: 8, fontFamily: FONT }}>
+      {children}
+    </div>
+  );
+}
+
+function Divider() {
+  return <div style={{ borderTop: `1px solid ${BORDER_SUBTLE}`, margin: "14px 0" }} />;
+}
 
 function MiniStepper({
   value, onChange, step, min, unit,
@@ -36,31 +48,21 @@ function MiniStepper({
     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
       <button
         onClick={() => onChange(Math.max(min, parseFloat((value - step).toFixed(1))))}
-        style={{ width: 28, height: 28, background: "#111", border: "1px solid #222", borderRadius: 4, color: "#888", fontSize: 18, cursor: "pointer", fontFamily: FONT, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}
+        style={{ width: 28, height: 28, background: SURFACE_2, border: `1px solid ${BORDER}`, borderRadius: 6, color: TEXT_MUTED, fontSize: 18, cursor: "pointer", fontFamily: FONT, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}
       >−</button>
       <div style={{ textAlign: "center", minWidth: 44 }}>
-        <div style={{ fontSize: 18, fontWeight: 700, color: "#fff", fontFamily: FONT, lineHeight: 1 }}>{value}</div>
-        <div style={{ fontSize: 9, color: "#555", fontFamily: FONT, marginTop: 2 }}>{unit}</div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: TEXT_PRIMARY, fontFamily: FONT, lineHeight: 1 }}>{value}</div>
+        <div style={{ fontSize: 9, color: TEXT_DIM, fontFamily: FONT, marginTop: 2 }}>{unit}</div>
       </div>
       <button
         onClick={() => onChange(parseFloat((value + step).toFixed(1)))}
-        style={{ width: 28, height: 28, background: "#111", border: "1px solid #222", borderRadius: 4, color: "#888", fontSize: 18, cursor: "pointer", fontFamily: FONT, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}
+        style={{ width: 28, height: 28, background: SURFACE_2, border: `1px solid ${BORDER}`, borderRadius: 6, color: TEXT_MUTED, fontSize: 18, cursor: "pointer", fontFamily: FONT, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}
       >+</button>
     </div>
   );
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: "#555", marginBottom: 8, fontFamily: FONT }}>
-      {children}
-    </div>
-  );
-}
-
-function Divider() {
-  return <div style={{ borderTop: "1px solid #1a1a1a", margin: "14px 0" }} />;
-}
+// ── Day Edit Panel ────────────────────────────────────────────────────────────
 
 function DayEditPanel({ date, onClose }: { date: string; onClose: () => void }) {
   const { state, dispatch } = useApp();
@@ -98,74 +100,72 @@ function DayEditPanel({ date, onClose }: { date: string; onClose: () => void }) 
   }
 
   const strengthOptions: { value: StrengthStatus; label: string; color: string; bg: string }[] = [
-    { value: "complete", label: "Complete", color: "#22c55e", bg: "rgba(34,197,94,0.12)" },
+    { value: "complete", label: "Complete", color: "#22c55e", bg: "rgba(34,197,94,0.12)"  },
     { value: "partial",  label: "Partial",  color: "#eab308", bg: "rgba(234,179,8,0.12)"  },
     { value: "skipped",  label: "Skipped",  color: "#ef4444", bg: "rgba(239,68,68,0.12)"  },
-    { value: "none",     label: "Clear",    color: "#555",    bg: "#111"                   },
+    { value: "none",     label: "Clear",    color: TEXT_DIM,  bg: SURFACE_2               },
   ];
 
   const hasExercises = (existingSession?.exercises?.length ?? 0) > 0;
 
   return (
-    <div style={{ ...card, marginTop: 12, border: "1px solid #2a2a2a", padding: 16 }}>
+    <div style={{ ...card, marginTop: 12, border: `1px solid ${BORDER}`, padding: 16 }}>
 
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#e0e0e0", fontFamily: FONT }}>{dateFormatted}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: TEXT_PRIMARY, fontFamily: FONT }}>{dateFormatted}</div>
           {existingSession?.dayType && (
-            <div style={{ fontSize: 11, color: "#555", fontFamily: FONT, marginTop: 2 }}>{existingSession.dayType}</div>
+            <div style={{ fontSize: 11, color: TEXT_DIM, fontFamily: FONT, marginTop: 2 }}>{existingSession.dayType}</div>
           )}
         </div>
         <button
           onClick={onClose}
-          style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: 20, fontFamily: FONT, lineHeight: 1, padding: "0 4px" }}
+          style={{ background: "none", border: "none", color: TEXT_DIM, cursor: "pointer", fontSize: 20, fontFamily: FONT, lineHeight: 1, padding: "0 4px" }}
         >✕</button>
       </div>
 
-      {/* ── STRENGTH LOG ── */}
+      {/* ── STRENGTH SECTION ── */}
       {isWeekday && (
         <div style={{ marginBottom: 4 }}>
           <SectionLabel>Strength</SectionLabel>
 
-          {/* Workout log — shown when exercises were recorded */}
+          {/* Workout log */}
           {hasExercises ? (
             <div style={{ marginBottom: 12 }}>
               {existingSession!.exercises.map((ex, ei) => (
                 <div key={ei} style={{ marginBottom: 10 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: ex.completed ? "#e0e0e0" : "#555", fontFamily: FONT }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: ex.completed ? TEXT_PRIMARY : TEXT_DIM, fontFamily: FONT }}>
                       {ex.name}
                     </div>
                     {ex.isSessionSwap && (
-                      <div style={{ fontSize: 9, color: "#444", fontFamily: FONT, letterSpacing: "0.08em" }}>SWAPPED</div>
+                      <div style={{ fontSize: 9, color: TEXT_DIM, fontFamily: FONT, letterSpacing: "0.08em" }}>SWAPPED</div>
                     )}
                   </div>
                   {ex.sets.map((set, si) => (
                     <div key={si} style={{ display: "flex", gap: 12, alignItems: "center", padding: "3px 0 3px 10px" }}>
-                      <div style={{ fontSize: 10, color: "#444", fontFamily: FONT, width: 16 }}>
-                        {si + 1}
-                      </div>
-                      <div style={{ fontSize: 12, color: "#999", fontFamily: FONT }}>
+                      <div style={{ fontSize: 10, color: TEXT_DIM, fontFamily: FONT, width: 16 }}>{si + 1}</div>
+                      <div style={{ fontSize: 12, color: TEXT_MUTED, fontFamily: FONT }}>
                         {set.reps} reps
                         {set.unit !== "bw" && set.weight > 0 && (
-                          <span style={{ color: "#666" }}> @ {set.weight} {set.unit}</span>
+                          <span style={{ color: TEXT_DIM }}> @ {set.weight} {set.unit}</span>
                         )}
-                        {set.unit === "bw" && <span style={{ color: "#555" }}> (bw)</span>}
+                        {set.unit === "bw" && <span style={{ color: TEXT_DIM }}> (bw)</span>}
                       </div>
                     </div>
                   ))}
                 </div>
               ))}
               {existingSession!.summary.totalVolume > 0 && (
-                <div style={{ fontSize: 11, color: "#444", fontFamily: FONT, paddingTop: 6, borderTop: "1px solid #111" }}>
+                <div style={{ fontSize: 11, color: TEXT_DIM, fontFamily: FONT, paddingTop: 6, borderTop: `1px solid ${BORDER_SUBTLE}` }}>
                   {existingSession!.summary.totalSets} sets · {existingSession!.summary.totalVolume.toLocaleString()} lbs total volume
                 </div>
               )}
               <Divider />
             </div>
           ) : existingSession && existingSession.status !== "not_started" ? (
-            <div style={{ fontSize: 12, color: "#444", fontFamily: FONT, marginBottom: 12, fontStyle: "italic" }}>
+            <div style={{ fontSize: 12, color: TEXT_DIM, fontFamily: FONT, marginBottom: 12, fontStyle: "italic" }}>
               {existingSession.status === "skipped" ? "Session skipped — no exercise data." : "No exercise detail recorded."}
             </div>
           ) : null}
@@ -179,10 +179,10 @@ function DayEditPanel({ date, onClose }: { date: string; onClose: () => void }) 
                 style={{
                   flex: 1, padding: "8px 0",
                   fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase",
-                  fontFamily: FONT, borderRadius: 4, cursor: "pointer",
-                  border: strengthStatus === opt.value ? `1px solid ${opt.color}55` : "1px solid #1a1a1a",
-                  background: strengthStatus === opt.value ? opt.bg : "#0e0e0e",
-                  color: strengthStatus === opt.value ? opt.color : "#444",
+                  fontFamily: FONT, borderRadius: 6, cursor: "pointer",
+                  border: strengthStatus === opt.value ? `1px solid ${opt.color}55` : `1px solid ${BORDER_SUBTLE}`,
+                  background: strengthStatus === opt.value ? opt.bg : SURFACE,
+                  color: strengthStatus === opt.value ? opt.color : TEXT_DIM,
                 }}
               >
                 {opt.label}
@@ -194,15 +194,15 @@ function DayEditPanel({ date, onClose }: { date: string; onClose: () => void }) 
 
       <Divider />
 
-      {/* ── CARDIO LOG ── */}
+      {/* ── CARDIO SECTION ── */}
       {(["am", "pm"] as const).map(slot => {
-        const existing  = slot === "am" ? existingAm : existingPm;
-        const done      = slot === "am" ? amDone : pmDone;
-        const setDone   = slot === "am" ? setAmDone : setPmDone;
-        const duration  = slot === "am" ? amDuration : pmDuration;
-        const setDur    = slot === "am" ? setAmDuration : setPmDuration;
-        const speed     = slot === "am" ? amSpeed : pmSpeed;
-        const setSpd    = slot === "am" ? setAmSpeed : setPmSpeed;
+        const existing = slot === "am" ? existingAm : existingPm;
+        const done     = slot === "am" ? amDone : pmDone;
+        const setDone  = slot === "am" ? setAmDone : setPmDone;
+        const duration = slot === "am" ? amDuration : pmDuration;
+        const setDur   = slot === "am" ? setAmDuration : setPmDuration;
+        const speed    = slot === "am" ? amSpeed : pmSpeed;
+        const setSpd   = slot === "am" ? setAmSpeed : setPmSpeed;
 
         return (
           <div key={slot} style={{ marginBottom: 14 }}>
@@ -213,11 +213,10 @@ function DayEditPanel({ date, onClose }: { date: string; onClose: () => void }) 
                 style={{
                   padding: "5px 14px", fontSize: 10, fontWeight: 700,
                   letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: FONT,
-                  borderRadius: 4, cursor: "pointer",
-                  border: done ? "1px solid #1a3a1a" : "1px solid #222",
-                  background: done ? "rgba(34,197,94,0.12)" : "#111",
-                  color: done ? "#22c55e" : "#444",
-                  marginBottom: 8,
+                  borderRadius: 6, cursor: "pointer", marginBottom: 8,
+                  border: done ? "1px solid rgba(34,197,94,0.35)" : `1px solid ${BORDER}`,
+                  background: done ? "rgba(34,197,94,0.12)" : SURFACE_2,
+                  color: done ? "#22c55e" : TEXT_DIM,
                 }}
               >
                 {done ? "✓ Done" : "Mark Done"}
@@ -226,7 +225,7 @@ function DayEditPanel({ date, onClose }: { date: string; onClose: () => void }) 
 
             {/* Previously logged stats */}
             {existing?.status === "complete" && !done && (
-              <div style={{ fontSize: 12, color: "#444", fontFamily: FONT, marginBottom: 6, fontStyle: "italic" }}>
+              <div style={{ fontSize: 12, color: TEXT_DIM, fontFamily: FONT, marginBottom: 6, fontStyle: "italic" }}>
                 Logged: {existing.duration} min @ {existing.speed} mph
               </div>
             )}
@@ -234,13 +233,13 @@ function DayEditPanel({ date, onClose }: { date: string; onClose: () => void }) 
             {done && (
               <div style={{ display: "flex", gap: 20, alignItems: "center", paddingLeft: 4 }}>
                 <MiniStepper value={duration} onChange={setDur} step={5} min={5} unit="min" />
-                <div style={{ width: 1, height: 40, background: "#1a1a1a" }} />
+                <div style={{ width: 1, height: 40, background: BORDER_SUBTLE }} />
                 <MiniStepper value={speed} onChange={setSpd} step={0.1} min={0.5} unit="mph" />
               </div>
             )}
 
             {!done && !existing && (
-              <div style={{ fontSize: 11, color: "#333", fontFamily: FONT, fontStyle: "italic" }}>Not logged</div>
+              <div style={{ fontSize: 11, color: TEXT_DIM, fontFamily: FONT, fontStyle: "italic" }}>Not logged</div>
             )}
           </div>
         );
@@ -251,8 +250,8 @@ function DayEditPanel({ date, onClose }: { date: string; onClose: () => void }) 
         onClick={save}
         style={{
           width: "100%", padding: 12, marginTop: 4,
-          background: "rgba(34,197,94,0.08)", border: "1px solid #1a3a1a",
-          borderRadius: 6, color: "#22c55e", fontSize: 13, fontWeight: 700,
+          background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.3)",
+          borderRadius: 8, color: "#22c55e", fontSize: 13, fontWeight: 700,
           fontFamily: FONT, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer",
         }}
       >
@@ -293,7 +292,7 @@ export default function CalendarView() {
     return "none";
   }
 
-  function getCardioStatus(day: number): "complete" | "partial" | "skipped" | "none" {
+  function getCardioStatus(day: number): "complete" | "partial" | "none" {
     const d = dateStr(day);
     if (d > today) return "none";
     const amSession = cardioSessions.find(s => s.date === d && (s.slot === "am" || !s.slot));
@@ -307,7 +306,7 @@ export default function CalendarView() {
 
   function handleCellClick(day: number) {
     const d = dateStr(day);
-    if (d > today) return; // can't edit future
+    if (d > today) return;
     setSelectedDate(prev => prev === d ? null : d);
   }
 
@@ -325,8 +324,7 @@ export default function CalendarView() {
   const strengthPartial   = weekSessions.filter(s => s.status === "partial").length;
   const strengthSkipped   = weekSessions.filter(s => s.status === "skipped").length;
   const strengthAdherence = strengthScheduled > 0
-    ? Math.round(((strengthCompleted + strengthPartial * 0.5) / strengthScheduled) * 100)
-    : 0;
+    ? Math.round(((strengthCompleted + strengthPartial * 0.5) / strengthScheduled) * 100) : 0;
 
   const weekDates: string[] = [];
   for (let i = 0; i < 7; i++) {
@@ -342,12 +340,11 @@ export default function CalendarView() {
     return n === 2 ? 1.0 : n === 1 ? 0.5 : 0;
   }
   const cardioCreditSum = weekDates.reduce((sum, d) => sum + dayCredit(d), 0);
-  const cardioDone     = weekDates.filter(d => dayCredit(d) > 0).length;
-  const cardioMissed   = weekDates.filter(d => dayCredit(d) === 0).length;
-  const daysElapsed    = weekDates.length;
+  const cardioDone    = weekDates.filter(d => dayCredit(d) > 0).length;
+  const cardioMissed  = weekDates.filter(d => dayCredit(d) === 0).length;
+  const daysElapsed   = weekDates.length;
   const cardioAdherence = daysElapsed > 0
-    ? Math.round((cardioCreditSum / daysElapsed) * 100)
-    : 0;
+    ? Math.round((cardioCreditSum / daysElapsed) * 100) : 0;
 
   const cells: (number | null)[] = [
     ...Array(firstDay).fill(null),
@@ -358,26 +355,26 @@ export default function CalendarView() {
     <div style={screen(null)}>
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", color: "#666", textTransform: "uppercase", fontFamily: FONT }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", color: TEXT_DIM, textTransform: "uppercase", fontFamily: FONT }}>
           {monthLabel}
         </div>
-        <div style={{ display: "flex", gap: 12, fontSize: 10, color: "#444", fontFamily: FONT }}>
+        <div style={{ display: "flex", gap: 12, fontSize: 10, color: TEXT_DIM, fontFamily: FONT }}>
           <span><span style={{ color: "#22c55e" }}>■</span> Complete</span>
           <span><span style={{ color: "#eab308" }}>■</span> Partial</span>
           <span><span style={{ color: "#ef4444" }}>■</span> Skipped</span>
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 16, marginTop: 8, fontSize: 10, color: "#444", fontFamily: FONT }}>
+      <div style={{ display: "flex", gap: 16, marginTop: 8, fontSize: 10, color: TEXT_DIM, fontFamily: FONT }}>
         <span>Top = Strength</span>
         <span>Bottom = Cardio</span>
-        <span style={{ color: "#333" }}>· Tap a day to edit</span>
+        <span style={{ color: "#333" }}>· Tap a day to view / edit</span>
       </div>
 
       {/* Calendar Grid */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginTop: 12 }}>
         {headers.map((h, i) => (
-          <div key={i} style={{ fontSize: 9, fontWeight: 700, color: "#444", textAlign: "center", padding: "4px 0 8px", letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: FONT }}>
+          <div key={i} style={{ fontSize: 9, fontWeight: 700, color: TEXT_DIM, textAlign: "center", padding: "4px 0 8px", letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: FONT }}>
             {h}
           </div>
         ))}
@@ -389,7 +386,7 @@ export default function CalendarView() {
           const isSelected = selectedDate === d;
           const sc = STATUS_COLORS[getStrengthStatus(day)];
           const cardioKey = isFuture ? "future" : getCardioStatus(day);
-          const cs = STATUS_COLORS[cardioKey === "partial" ? "partial" : cardioKey];
+          const cs = STATUS_COLORS[cardioKey];
 
           return (
             <div
@@ -397,40 +394,33 @@ export default function CalendarView() {
               onClick={() => handleCellClick(day)}
               style={{
                 aspectRatio: "1",
-                display: "flex",
-                flexDirection: "column",
-                borderRadius: 4,
-                overflow: "hidden",
-                border: isSelected ? "1px solid #555" : `1px solid ${sc.border}`,
+                display: "flex", flexDirection: "column",
+                borderRadius: 4, overflow: "hidden",
+                border: isSelected ? `1px solid ${TEXT_MUTED}` : `1px solid ${sc.border}`,
                 cursor: isFuture ? "default" : "pointer",
-                outline: isSelected ? "1px solid #444" : "none",
               }}
             >
-              {/* Top half — Strength */}
               <div style={{
-                flex: 1,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                background: sc.bg,
-                fontSize: 11, fontWeight: 600, color: sc.color,
+                flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+                background: sc.bg, fontSize: 11, fontWeight: 600, color: sc.color,
                 fontFamily: FONT, borderBottom: "1px solid #0c0c0c",
               }}>
                 {day}
               </div>
-              {/* Bottom half — Cardio */}
               <div style={{ flex: 1, background: cs.bg }} />
             </div>
           );
         })}
       </div>
 
-      {/* Day Edit Panel */}
+      {/* Day Edit / View Panel */}
       {selectedDate && (
         <DayEditPanel date={selectedDate} onClose={() => setSelectedDate(null)} />
       )}
 
       {/* Strength Weekly Summary */}
       <div style={{ ...card, marginTop: 20 }}>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#666", padding: "0 0 10px", borderBottom: "1px solid #222", fontFamily: FONT }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: TEXT_DIM, padding: "0 0 10px", borderBottom: `1px solid ${BORDER_SUBTLE}`, fontFamily: FONT }}>
           Strength — This Week
         </div>
         {[
@@ -440,16 +430,16 @@ export default function CalendarView() {
           { label: "Skipped",    value: String(strengthSkipped),   highlight: strengthSkipped > 0 },
           { label: "Adherence",  value: `${strengthAdherence}%`,  highlight: false },
         ].map(row => (
-          <div key={row.label} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "1px solid #111", fontSize: 12, fontFamily: FONT }}>
-            <span style={{ color: "#666" }}>{row.label}</span>
-            <span style={{ color: row.highlight ? "#ef4444" : "#e0e0e0", fontWeight: 600 }}>{row.value}</span>
+          <div key={row.label} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: `1px solid ${BORDER_SUBTLE}`, fontSize: 12, fontFamily: FONT }}>
+            <span style={{ color: TEXT_DIM }}>{row.label}</span>
+            <span style={{ color: row.highlight ? "#ef4444" : TEXT_PRIMARY, fontWeight: 600 }}>{row.value}</span>
           </div>
         ))}
       </div>
 
       {/* Cardio Weekly Summary */}
       <div style={{ ...card, marginTop: 12, marginBottom: 32 }}>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#666", padding: "0 0 10px", borderBottom: "1px solid #222", fontFamily: FONT }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: TEXT_DIM, padding: "0 0 10px", borderBottom: `1px solid ${BORDER_SUBTLE}`, fontFamily: FONT }}>
           Cardio — This Week
         </div>
         {[
@@ -459,9 +449,9 @@ export default function CalendarView() {
           { label: "Credit earned",    value: `${cardioCreditSum.toFixed(1)} / ${daysElapsed}`, highlight: false },
           { label: "Adherence",        value: `${cardioAdherence}%`, highlight: false },
         ].map(row => (
-          <div key={row.label} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "1px solid #111", fontSize: 12, fontFamily: FONT }}>
-            <span style={{ color: "#666" }}>{row.label}</span>
-            <span style={{ color: row.highlight ? "#ef4444" : "#e0e0e0", fontWeight: 600 }}>{row.value}</span>
+          <div key={row.label} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: `1px solid ${BORDER_SUBTLE}`, fontSize: 12, fontFamily: FONT }}>
+            <span style={{ color: TEXT_DIM }}>{row.label}</span>
+            <span style={{ color: row.highlight ? "#ef4444" : TEXT_PRIMARY, fontWeight: 600 }}>{row.value}</span>
           </div>
         ))}
       </div>

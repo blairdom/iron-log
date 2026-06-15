@@ -1,5 +1,5 @@
 import { useApp } from "../store/AppStore";
-import { FONT, screen, card, label } from "../components/theme";
+import { FONT, screen, card, label, SURFACE, SURFACE_2, BORDER, BORDER_SUBTLE, TEXT_PRIMARY, TEXT_MUTED, TEXT_DIM } from "../components/theme";
 import type { GoalRecord } from "../engine/types";
 
 export default function GoalsView() {
@@ -18,11 +18,11 @@ export default function GoalsView() {
           <div style={{ fontSize: 10, color: "#555", fontFamily: FONT, letterSpacing: "0.1em", textTransform: "uppercase" }}>
             Progress
           </div>
-          <div style={{ fontSize: 11, color: "#e0e0e0", fontFamily: FONT, fontWeight: 600 }}>
+          <div style={{ fontSize: 11, color: TEXT_PRIMARY, fontFamily: FONT, fontWeight: 600 }}>
             {g.progressValue} / {g.targetValue}
           </div>
         </div>
-        <div style={{ height: 4, background: "#1a1a1a", borderRadius: 2, overflow: "hidden" }}>
+        <div style={{ height: 4, background: BORDER_SUBTLE, borderRadius: 2, overflow: "hidden" }}>
           <div style={{ height: "100%", width: `${pct * 100}%`, background: "#22c55e", borderRadius: 2, transition: "width 0.3s" }} />
         </div>
       </div>
@@ -31,7 +31,7 @@ export default function GoalsView() {
 
   return (
     <div style={screen(null)}>
-      <div style={{ fontSize: 11, color: "#555", fontFamily: FONT, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 20 }}>
+      <div style={{ fontSize: 11, color: TEXT_DIM, fontFamily: FONT, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 20 }}>
         Goals
       </div>
 
@@ -43,7 +43,7 @@ export default function GoalsView() {
               <div style={{ fontSize: 10, color: "#22c55e", fontFamily: FONT, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 4 }}>
                 Active — Tier {active.tier}
               </div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", fontFamily: FONT }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: TEXT_PRIMARY, fontFamily: FONT }}>
                 {active.label}
               </div>
             </div>
@@ -62,7 +62,7 @@ export default function GoalsView() {
           <div style={{ fontSize: 10, color: "#555", fontFamily: FONT, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 4 }}>
             Next — Tier {nextLocked.tier}
           </div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "#666", fontFamily: FONT }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: TEXT_DIM, fontFamily: FONT }}>
             {nextLocked.label}
           </div>
         </div>
@@ -73,13 +73,13 @@ export default function GoalsView() {
         <div>
           <div style={label}>Achieved</div>
           {achieved.map(g => (
-            <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #111" }}>
+            <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${BORDER_SUBTLE}` }}>
               <div>
-                <div style={{ fontSize: 12, color: "#e0e0e0", fontFamily: FONT, fontWeight: 600 }}>
+                <div style={{ fontSize: 12, color: TEXT_PRIMARY, fontFamily: FONT, fontWeight: 600 }}>
                   {g.label}
                 </div>
                 {g.achievedDate && (
-                  <div style={{ fontSize: 10, color: "#444", fontFamily: FONT, marginTop: 2 }}>
+                  <div style={{ fontSize: 10, color: TEXT_DIM, fontFamily: FONT, marginTop: 2 }}>
                     {g.achievedDate}
                   </div>
                 )}
@@ -91,7 +91,7 @@ export default function GoalsView() {
       )}
 
       {achieved.length === 0 && !active && (
-        <div style={{ color: "#444", fontSize: 13, fontFamily: FONT }}>
+        <div style={{ color: TEXT_DIM, fontSize: 13, fontFamily: FONT }}>
           All milestones achieved.
         </div>
       )}

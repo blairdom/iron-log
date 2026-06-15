@@ -1,5 +1,5 @@
 import { useApp } from "../store/AppStore";
-import { FONT, THREAT_COLORS, screen, card, label } from "../components/theme";
+import { FONT, THREAT_COLORS, screen, card, label, SURFACE_2, BORDER, TEXT_PRIMARY, TEXT_MUTED, TEXT_DIM, BORDER_SUBTLE } from "../components/theme";
 
 interface Props {
   onComplete: () => void;
@@ -30,10 +30,10 @@ function Stepper({
         <button
           style={{
             width: 44, height: 44,
-            background: "#111",
-            border: "1px solid #333",
-            borderRadius: 6,
-            color: "#888",
+            background: SURFACE_2,
+            border: `1px solid ${BORDER}`,
+            borderRadius: 8,
+            color: TEXT_MUTED,
             fontSize: 20,
             cursor: "pointer",
             fontFamily: FONT,
@@ -44,18 +44,18 @@ function Stepper({
           −
         </button>
         <div style={{ textAlign: "center", minWidth: 80 }}>
-          <div style={{ fontSize: 48, fontWeight: 800, color: "#fff", lineHeight: 1, letterSpacing: "-0.03em", fontFamily: FONT }}>
+          <div style={{ fontSize: 48, fontWeight: 800, color: TEXT_PRIMARY, lineHeight: 1, letterSpacing: "-0.03em", fontFamily: FONT }}>
             {value}
           </div>
-          <div style={{ fontSize: 11, color: "#555", marginTop: 4, fontFamily: FONT }}>{unit}</div>
+          <div style={{ fontSize: 11, color: TEXT_DIM, marginTop: 4, fontFamily: FONT }}>{unit}</div>
         </div>
         <button
           style={{
             width: 44, height: 44,
-            background: "#111",
-            border: "1px solid #333",
-            borderRadius: 6,
-            color: "#888",
+            background: SURFACE_2,
+            border: `1px solid ${BORDER}`,
+            borderRadius: 8,
+            color: TEXT_MUTED,
             fontSize: 20,
             cursor: "pointer",
             fontFamily: FONT,
@@ -80,7 +80,7 @@ export default function CardioView({ onComplete, onBack }: Props) {
       <div style={screen(null)}>
         <div style={{ color: "#555", fontFamily: FONT, fontSize: 13 }}>No active cardio session.</div>
         <button
-          style={{ marginTop: 16, padding: "8px 14px", fontSize: 10, color: "#555", background: "#111", border: "1px dashed #333", borderRadius: 4, cursor: "pointer", fontFamily: FONT }}
+          style={{ marginTop: 16, padding: "8px 14px", fontSize: 10, color: TEXT_DIM, background: SURFACE_2, border: `1px dashed ${BORDER}`, borderRadius: 8, cursor: "pointer", fontFamily: FONT }}
           onClick={onBack}
         >
           ← BACK
@@ -106,8 +106,8 @@ export default function CardioView({ onComplete, onBack }: Props) {
           fontWeight: 700,
           letterSpacing: "0.1em",
           color: cardioBehavioral.todayStatus === "complete" ? "#22c55e" : cardioBehavioral.todayStatus === "partial" ? "#eab308" : "#888",
-          background: cardioBehavioral.todayStatus === "complete" ? "rgba(34,197,94,0.1)" : cardioBehavioral.todayStatus === "partial" ? "rgba(234,179,8,0.1)" : "#111",
-          border: `1px solid ${cardioBehavioral.todayStatus === "complete" ? "#1a3a1a" : cardioBehavioral.todayStatus === "partial" ? "#3a3210" : "#222"}`,
+          background: cardioBehavioral.todayStatus === "complete" ? "rgba(34,197,94,0.08)" : cardioBehavioral.todayStatus === "partial" ? "rgba(234,179,8,0.08)" : SURFACE_2,
+          border: `1px solid ${cardioBehavioral.todayStatus === "complete" ? "rgba(34,197,94,0.3)" : cardioBehavioral.todayStatus === "partial" ? "rgba(234,179,8,0.3)" : BORDER_SUBTLE}`,
           padding: "4px 10px",
           borderRadius: 3,
           fontFamily: FONT,
@@ -127,7 +127,7 @@ export default function CardioView({ onComplete, onBack }: Props) {
             label="Duration"
             unit="minutes"
           />
-          <div style={{ width: 1, background: "#1a1a1a", alignSelf: "stretch" }} />
+          <div style={{ width: 1, background: BORDER_SUBTLE, alignSelf: "stretch" }} />
           <Stepper
             value={activeCardioSession.speed}
             onChange={v => dispatch({ type: "UPDATE_CARDIO_FIELD", field: "speed", value: v })}
@@ -139,7 +139,7 @@ export default function CardioView({ onComplete, onBack }: Props) {
         </div>
 
         {/* Calorie estimate — soft display only */}
-        <div style={{ textAlign: "center", paddingTop: 12, borderTop: "1px solid #1a1a1a", fontSize: 11, color: "#444", fontFamily: FONT }}>
+        <div style={{ textAlign: "center", paddingTop: 12, borderTop: `1px solid ${BORDER_SUBTLE}`, fontSize: 11, color: TEXT_DIM, fontFamily: FONT }}>
           ~{Math.round(activeCardioSession.duration * 6.5)} kcal estimated
         </div>
       </div>
@@ -147,17 +147,17 @@ export default function CardioView({ onComplete, onBack }: Props) {
       {/* Streak info */}
       <div style={{ display: "flex", gap: 24, marginTop: 20 }}>
         <div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: "#fff", fontFamily: FONT }}>{cardioBehavioral.streak}</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: TEXT_PRIMARY, fontFamily: FONT }}>{cardioBehavioral.streak}</div>
           <div style={{ ...label, marginTop: 4 }}>Day Streak</div>
         </div>
         <div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: "#fff", fontFamily: FONT }}>
+          <div style={{ fontSize: 24, fontWeight: 700, color: TEXT_PRIMARY, fontFamily: FONT }}>
             {Math.round(cardioBehavioral.adherenceRate * 100)}%
           </div>
           <div style={{ ...label, marginTop: 4 }}>7-Day Rate</div>
         </div>
         <div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: "#fff", fontFamily: FONT }}>
+          <div style={{ fontSize: 24, fontWeight: 700, color: TEXT_PRIMARY, fontFamily: FONT }}>
             {66 - cardioBehavioral.streak > 0 ? 66 - cardioBehavioral.streak : "✓"}
           </div>
           <div style={{ ...label, marginTop: 4 }}>Days to Lock</div>

@@ -1,5 +1,5 @@
 import { useApp } from "../store/AppStore";
-import { THREAT_COLORS, FONT, screen, card, label } from "../components/theme";
+import { THREAT_COLORS, FONT, screen, card, label, SURFACE, SURFACE_2, BORDER, BORDER_SUBTLE, TEXT_PRIMARY, TEXT_MUTED, TEXT_DIM, BASE_BG } from "../components/theme";
 import { threatLabel, threatMessage } from "../engine/behavioral";
 
 interface Props {
@@ -20,69 +20,68 @@ export default function Dashboard({ onStartSession, onLogCardio }: Props) {
   const sessionStatus = todaySession?.status ?? "not_started";
 
   const exerciseCount = todayDay?.sections.reduce((a, s) => a + s.slots.length, 0) ?? 0;
-
   const adherencePct = Math.round(adherenceRate * 100);
 
   function statusBadge() {
-    if (sessionStatus === "complete") return { label: "COMPLETE", color: "#22c55e", bg: "rgba(34,197,94,0.1)" };
-    if (sessionStatus === "partial") return { label: "PARTIAL", color: "#eab308", bg: "rgba(234,179,8,0.1)" };
-    if (sessionStatus === "skipped") return { label: "SKIPPED", color: "#ef4444", bg: "rgba(239,68,68,0.1)" };
-    return { label: "NOT STARTED", color: "#eab308", bg: "rgba(234,179,8,0.1)" };
+    if (sessionStatus === "complete") return { label: "COMPLETE",    color: "#22c55e", bg: "rgba(34,197,94,0.1)",  border: "rgba(34,197,94,0.25)"  };
+    if (sessionStatus === "partial")  return { label: "PARTIAL",     color: "#eab308", bg: "rgba(234,179,8,0.1)", border: "rgba(234,179,8,0.25)"  };
+    if (sessionStatus === "skipped")  return { label: "SKIPPED",     color: "#ef4444", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.25)"  };
+    return                                   { label: "NOT STARTED", color: "#eab308", bg: "rgba(234,179,8,0.1)", border: "rgba(234,179,8,0.25)"  };
   }
 
   const badge = statusBadge();
 
   const cardioStatusColor = cardioBehavioral.todayStatus === "complete" ? "#22c55e"
-    : cardioBehavioral.todayStatus === "partial" ? "#eab308" : "#555";
+    : cardioBehavioral.todayStatus === "partial" ? "#eab308" : TEXT_DIM;
   const cardioStatusLabel = cardioBehavioral.todayStatus === "complete" ? "BOTH DONE"
     : cardioBehavioral.todayStatus === "partial" ? "HALF DONE" : "PENDING";
 
   return (
     <div style={screen(threatState)}>
-      {/* Threat Badge */}
+
+      {/* Adherence hero */}
+      <div style={{ paddingTop: 8 }}>
+        <div style={{ fontSize: 64, fontWeight: 800, lineHeight: 1, color: TEXT_PRIMARY, letterSpacing: "-0.03em", fontFamily: FONT }}>
+          {adherencePct}<span style={{ fontSize: 32, fontWeight: 600, color: TEXT_MUTED }}>%</span>
+        </div>
+        <div style={{ ...label, marginTop: 4 }}>Program Adherence Rate</div>
+      </div>
+
+      {/* Threat message */}
       <div style={{
-        display: "inline-block",
-        padding: "6px 16px",
-        borderRadius: 4,
-        fontSize: 11,
-        fontWeight: 700,
-        letterSpacing: "0.15em",
-        textTransform: "uppercase",
-        color: tc.accent,
-        background: tc.glow,
+        marginTop: 16,
+        padding: "10px 14px",
+        borderRadius: 8,
+        background: tc.bg,
         border: `1px solid ${tc.border}`,
+        fontSize: 12,
+        color: tc.accent,
+        fontStyle: "italic",
         fontFamily: FONT,
       }}>
-        {threatLabel(threatState)}
-      </div>
-
-      {/* Threat Message */}
-      <div style={{ fontSize: 13, color: tc.accent, marginTop: 8, fontStyle: "italic", opacity: 0.9, fontFamily: FONT }}>
         {threatMessage(threatState)}
       </div>
-
-      {/* Adherence Rate */}
-      <div style={{ fontSize: 64, fontWeight: 800, lineHeight: 1, marginTop: 24, color: "#fff", letterSpacing: "-0.03em", fontFamily: FONT }}>
-        {adherencePct}%
-      </div>
-      <div style={label}>Program Adherence Rate</div>
 
       {/* Today's Session Card */}
       {todayDay && (
         <div style={card}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <div style={{ fontSize: 11, color: "#666", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600, fontFamily: FONT }}>
+              <div style={{ fontSize: 10, color: TEXT_DIM, letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 700, fontFamily: FONT }}>
                 Today — {todayDay.label}
               </div>
-              <div style={{ fontSize: 16, fontWeight: 700, marginTop: 4, color: "#fff", fontFamily: FONT }}>
+              <div style={{ fontSize: 15, fontWeight: 700, marginTop: 4, color: TEXT_PRIMARY, fontFamily: FONT }}>
                 {todayDay.name}
               </div>
-              <div style={{ fontSize: 11, color: "#555", marginTop: 2, fontFamily: FONT }}>
+              <div style={{ fontSize: 11, color: TEXT_MUTED, marginTop: 2, fontFamily: FONT }}>
                 {exerciseCount} exercises
               </div>
             </div>
-            <div style={{ fontSize: 10, color: badge.color, fontWeight: 700, letterSpacing: "0.1em", background: badge.bg, padding: "4px 10px", borderRadius: 3, fontFamily: FONT }}>
+            <div style={{
+              fontSize: 10, color: badge.color, fontWeight: 700, letterSpacing: "0.1em",
+              background: badge.bg, padding: "5px 11px", borderRadius: 6,
+              border: `1px solid ${badge.border}`, fontFamily: FONT,
+            }}>
               {badge.label}
             </div>
           </div>
@@ -94,18 +93,20 @@ export default function Dashboard({ onStartSession, onLogCardio }: Props) {
         <button
           style={{
             width: "100%",
-            padding: 16,
-            background: tc.glow,
+            padding: "14px 0",
+            background: tc.bg,
             border: `1px solid ${tc.border}`,
-            borderRadius: 6,
+            borderRadius: 10,
             color: tc.accent,
-            fontSize: 14,
+            fontSize: 12,
             fontWeight: 700,
             fontFamily: FONT,
-            letterSpacing: "0.1em",
+            letterSpacing: "0.14em",
             textTransform: "uppercase",
             cursor: "pointer",
-            marginTop: 20,
+            marginTop: 12,
+            boxShadow: `0 0 24px ${tc.glow}`,
+            transition: "all 0.15s",
           }}
           onClick={onStartSession}
         >
@@ -113,39 +114,35 @@ export default function Dashboard({ onStartSession, onLogCardio }: Props) {
         </button>
       )}
 
-      {/* ── Cardio Consistency Card ── */}
-      <div style={{ ...card, marginTop: 16 }}>
+      {/* Cardio Card */}
+      <div style={{ ...card, marginTop: 12 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <div style={{ fontSize: 11, color: "#666", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600, fontFamily: FONT }}>
+            <div style={{ fontSize: 10, color: TEXT_DIM, letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 700, fontFamily: FONT }}>
               Cardio Streak
             </div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: "#fff", marginTop: 4, fontFamily: FONT }}>
-              {cardioBehavioral.streak} days
+            <div style={{ fontSize: 22, fontWeight: 700, color: TEXT_PRIMARY, marginTop: 4, fontFamily: FONT }}>
+              {cardioBehavioral.streak} <span style={{ fontSize: 12, color: TEXT_MUTED, fontWeight: 500 }}>days</span>
             </div>
-            <div style={{ fontSize: 11, color: "#444", marginTop: 2, fontFamily: FONT }}>
+            <div style={{ fontSize: 11, color: TEXT_DIM, marginTop: 2, fontFamily: FONT }}>
               {66 - cardioBehavioral.streak > 0
                 ? `${66 - cardioBehavioral.streak} days to habit lock`
                 : "LOCKED IN — habit formed"}
             </div>
           </div>
           <div style={{
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: "0.1em",
+            fontSize: 10, fontWeight: 700, letterSpacing: "0.1em",
             color: cardioStatusColor,
-            background: cardioBehavioral.todayStatus === "complete" ? "rgba(34,197,94,0.1)" : "#111",
-            border: `1px solid ${cardioBehavioral.todayStatus === "complete" ? "#1a3a1a" : "#222"}`,
-            padding: "4px 10px",
-            borderRadius: 3,
-            fontFamily: FONT,
+            background: cardioBehavioral.todayStatus === "complete" ? "rgba(34,197,94,0.08)" : SURFACE_2,
+            border: `1px solid ${cardioBehavioral.todayStatus === "complete" ? "rgba(34,197,94,0.25)" : BORDER_SUBTLE}`,
+            padding: "5px 11px", borderRadius: 6, fontFamily: FONT,
           }}>
             {cardioStatusLabel}
           </div>
         </div>
 
         {/* AM / PM slot buttons */}
-        <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+        <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
           {(["am", "pm"] as const).map(slot => {
             const slotStatus = slot === "am" ? cardioBehavioral.todayAmStatus : cardioBehavioral.todayPmStatus;
             const done = slotStatus === "complete";
@@ -155,17 +152,18 @@ export default function Dashboard({ onStartSession, onLogCardio }: Props) {
                 style={{
                   flex: 1,
                   padding: "10px 0",
-                  background: done ? "rgba(34,197,94,0.08)" : cardioTc.glow,
-                  border: `1px solid ${done ? "#1a3a1a" : cardioTc.border}`,
-                  borderRadius: 6,
+                  background: done ? "rgba(34,197,94,0.07)" : SURFACE_2,
+                  border: `1px solid ${done ? "rgba(34,197,94,0.25)" : BORDER}`,
+                  borderRadius: 8,
                   color: done ? "#22c55e" : cardioTc.accent,
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: 700,
                   fontFamily: FONT,
-                  letterSpacing: "0.1em",
+                  letterSpacing: "0.12em",
                   textTransform: "uppercase",
                   cursor: done ? "default" : "pointer",
-                  opacity: done ? 0.7 : 1,
+                  opacity: done ? 0.8 : 1,
+                  transition: "all 0.15s",
                 }}
                 disabled={done}
                 onClick={() => !done && onLogCardio(slot)}
@@ -183,17 +181,17 @@ export default function Dashboard({ onStartSession, onLogCardio }: Props) {
           style={{
             width: "100%",
             padding: 12,
-            background: "rgba(59,130,246,0.1)",
-            border: "1px solid #102040",
-            borderRadius: 6,
+            background: "rgba(59,130,246,0.08)",
+            border: "1px solid rgba(59,130,246,0.25)",
+            borderRadius: 8,
             color: "#3b82f6",
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: 700,
             fontFamily: FONT,
-            letterSpacing: "0.1em",
+            letterSpacing: "0.12em",
             textTransform: "uppercase",
             cursor: "pointer",
-            marginTop: 16,
+            marginTop: 12,
           }}
           onClick={() => dispatch({ type: "EXIT_RECOVERY_MODE" })}
         >
@@ -205,16 +203,17 @@ export default function Dashboard({ onStartSession, onLogCardio }: Props) {
             width: "100%",
             padding: 10,
             background: "transparent",
-            border: "1px solid #1a1a1a",
-            borderRadius: 6,
-            color: "#444",
-            fontSize: 11,
+            border: `1px solid ${BORDER_SUBTLE}`,
+            borderRadius: 8,
+            color: TEXT_DIM,
+            fontSize: 10,
             fontWeight: 600,
             fontFamily: FONT,
-            letterSpacing: "0.1em",
+            letterSpacing: "0.12em",
             textTransform: "uppercase",
             cursor: "pointer",
-            marginTop: 16,
+            marginTop: 12,
+            transition: "all 0.15s",
           }}
           onClick={() => dispatch({ type: "ENTER_RECOVERY_MODE" })}
         >
@@ -223,36 +222,36 @@ export default function Dashboard({ onStartSession, onLogCardio }: Props) {
       )}
 
       {/* Stat Row */}
-      <div style={{ display: "flex", gap: 24, marginTop: 20 }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 24, fontWeight: 700, color: "#fff", fontFamily: FONT }}>{streak}</div>
-          <div style={label}>Strength Streak</div>
+      <div style={{ display: "flex", gap: 16, marginTop: 16 }}>
+        <div style={{ flex: 1, background: SURFACE, border: `1px solid ${BORDER_SUBTLE}`, borderRadius: 10, padding: "14px 16px" }}>
+          <div style={{ fontSize: 22, fontWeight: 700, color: TEXT_PRIMARY, fontFamily: FONT }}>{streak}</div>
+          <div style={{ ...label, marginTop: 2 }}>Strength Streak</div>
         </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 24, fontWeight: 700, color: "#fff", fontFamily: FONT }}>
+        <div style={{ flex: 1, background: SURFACE, border: `1px solid ${BORDER_SUBTLE}`, borderRadius: 10, padding: "14px 16px" }}>
+          <div style={{ fontSize: 22, fontWeight: 700, color: TEXT_PRIMARY, fontFamily: FONT }}>
             {Math.round(cardioBehavioral.adherenceRate * 100)}%
           </div>
-          <div style={label}>Cardio 7-Day</div>
+          <div style={{ ...label, marginTop: 2 }}>Cardio 7-Day</div>
         </div>
       </div>
 
       {/* Current Goal */}
       {activeGoal && (
         <div style={{
-          marginTop: 16,
-          padding: "10px 14px",
-          background: "#111",
-          border: "1px solid #1a1a1a",
-          borderRadius: 6,
+          marginTop: 12,
+          padding: "12px 16px",
+          background: SURFACE,
+          border: `1px solid ${BORDER_SUBTLE}`,
+          borderRadius: 10,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e", flexShrink: 0 }} />
-            <div style={{ fontSize: 12, color: "#888", fontFamily: FONT }}>Goal: {activeGoal.label}</div>
+            <div style={{ fontSize: 12, color: TEXT_MUTED, fontFamily: FONT }}>Goal: {activeGoal.label}</div>
           </div>
-          <div style={{ fontSize: 12, color: "#fff", fontFamily: FONT, fontWeight: 600, flexShrink: 0 }}>
+          <div style={{ fontSize: 12, color: TEXT_PRIMARY, fontFamily: FONT, fontWeight: 600, flexShrink: 0 }}>
             {activeGoal.progressValue}/{activeGoal.targetValue}
           </div>
         </div>
