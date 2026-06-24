@@ -110,6 +110,24 @@ function buildActiveSession(dayKey: string, program: DayTemplate[], sessions: Se
   };
 }
 
+/** Backfill all program slots from the most recent completed session per day */
+function syncAllProgramDefaults(
+  program: DayTemplate[],
+  sessions: SessionRecord[]
+): DayTemplate[] {
+  // For each scheduled dayKey, find the most recent session with completed exercises
+  const dayKeys = ["mon", "tue", "wed", "thu", "fri"];
+  let updated = program;
+  for (const dayKey of dayKeys) {
+    const best = [...sessions]
+      .filter(s => s.dayKey === dayKey && (s.status === "complete" || s.status === "partial"))
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .find(s => s.exercises.some(e => e.completed && e.sets.length > 0));
+    if (best) updated = syncProgramDefaults(updated, best);
+  }
+  return updated;
+}
+
 /** Write completed exercise sets back into program slot defaults so Program tab stays current */
 function syncProgramDefaults(
   program: DayTemplate[],
@@ -675,7 +693,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const sessions = loadSessions();
   const adherenceRecords = loadAdherence();
   const recoveryMode = loadRecoveryMode();
-  const program = loadProgram();
+  const program = syncAllProgramDefaults(loadProgram(), sessions);
   const goalsInit = loadGoals();
   const behavioral = computeBehavioralState(sessions, adherenceRecords, recoveryMode, goalsInit, today);
   const goals = computeGoals(goalsInit, sessions, adherenceRecords, behavioral.streak, today);
@@ -706,7 +724,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         type: "HYDRATE",
         sessions: remote.sessions.length > 0 ? remote.sessions : sessions,
         cardioSessions: remote.cardio_sessions.length > 0 ? remote.cardio_sessions : cardioSessions,
-        program: remote.program ?? program,
+        program: syncAllProgramDefaults(remote.program ?? program, remote.sessions.length > 0 ? remote.sessions : sessions),
         adherenceRecords: remote.adherence_records.length > 0 ? remote.adherence_records : adherenceRecords,
       });
     });
