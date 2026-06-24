@@ -110,6 +110,29 @@ function buildActiveSession(dayKey: string, program: DayTemplate[], sessions: Se
   };
 }
 
+/** Write completed exercise sets back into program slot defaults so Program tab stays current */
+function syncProgramDefaults(
+  program: DayTemplate[],
+  session: SessionRecord
+): DayTemplate[] {
+  return program.map(day => {
+    if (day.key !== session.dayKey) return day;
+    return {
+      ...day,
+      sections: day.sections.map(sec => ({
+        ...sec,
+        slots: sec.slots.map(slot => {
+          const ex = session.exercises.find(
+            e => e.exerciseId === slot.selectedExerciseId && e.completed && e.sets.length > 0
+          );
+          if (!ex) return slot;
+          return { ...slot, defaultSets: ex.sets.map(s => ({ ...s })) };
+        }),
+      })),
+    };
+  });
+}
+
 function computeSummary(exercises: import("../engine/types").ExerciseRecord[]) {
   const completed = exercises.filter(e => e.completed);
   const totalSets = completed.reduce((a, e) => a + e.sets.length, 0);
@@ -258,15 +281,18 @@ function reducer(state: AppState, action: Action): AppState {
 
       const behavioral = computeBehavioralState(sessions, adherenceRecords, recoveryMode, state.goals, state.today);
       const goals = computeGoals(state.goals, sessions, adherenceRecords, behavioral.streak, state.today);
+      const program = syncProgramDefaults(state.program, finalSession);
 
       saveSessions(sessions);
       saveAdherence(adherenceRecords);
       saveRecoveryMode(recoveryMode);
       saveGoals(goals);
+      saveProgram(program);
       pushSessions(sessions);
       pushAdherence(adherenceRecords);
+      pushProgram(program);
 
-      return { ...state, sessions, adherenceRecords, recoveryMode, behavioral, goals, activeSession: null };
+      return { ...state, sessions, adherenceRecords, recoveryMode, behavioral, goals, program, activeSession: null };
     }
 
     case "FLUB_SESSION": {
@@ -311,15 +337,18 @@ function reducer(state: AppState, action: Action): AppState {
 
       const behavioral = computeBehavioralState(sessions, adherenceRecords, recoveryMode, state.goals, state.today);
       const goals = computeGoals(state.goals, sessions, adherenceRecords, behavioral.streak, state.today);
+      const program = syncProgramDefaults(state.program, finalSession);
 
       saveSessions(sessions);
       saveAdherence(adherenceRecords);
       saveRecoveryMode(recoveryMode);
       saveGoals(goals);
+      saveProgram(program);
       pushSessions(sessions);
       pushAdherence(adherenceRecords);
+      pushProgram(program);
 
-      return { ...state, sessions, adherenceRecords, recoveryMode, behavioral, goals, activeSession: null };
+      return { ...state, sessions, adherenceRecords, recoveryMode, behavioral, goals, program, activeSession: null };
     }
 
     case "SKIP_SESSION": {
