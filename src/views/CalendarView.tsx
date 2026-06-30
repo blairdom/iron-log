@@ -269,11 +269,28 @@ export default function CalendarView() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const now = new Date(today + "T12:00:00");
-  const year = now.getFullYear();
-  const month = now.getMonth();
+  const [viewYear, setViewYear] = useState(now.getFullYear());
+  const [viewMonth, setViewMonth] = useState(now.getMonth());
+
+  const year = viewYear;
+  const month = viewMonth;
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfMonth(year, month);
-  const monthLabel = now.toLocaleString("default", { month: "long", year: "numeric" }).toUpperCase();
+  const monthLabel = new Date(year, month, 1).toLocaleString("default", { month: "long", year: "numeric" }).toUpperCase();
+
+  function prevMonth() {
+    setSelectedDate(null);
+    if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); }
+    else setViewMonth(m => m - 1);
+  }
+  function nextMonth() {
+    const isCurrentMonth = viewYear === now.getFullYear() && viewMonth === now.getMonth();
+    if (isCurrentMonth) return;
+    setSelectedDate(null);
+    if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0); }
+    else setViewMonth(m => m + 1);
+  }
+  const isCurrentMonth = viewYear === now.getFullYear() && viewMonth === now.getMonth();
 
   const headers = ["M", "T", "W", "T", "F", "S", "S"];
 
@@ -354,15 +371,23 @@ export default function CalendarView() {
   return (
     <div style={screen(null)}>
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", color: TEXT_DIM, textTransform: "uppercase", fontFamily: FONT }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+        <button
+          onClick={prevMonth}
+          style={{ background: "none", border: `1px solid ${BORDER_SUBTLE}`, borderRadius: 6, color: TEXT_MUTED, fontSize: 16, cursor: "pointer", padding: "4px 10px", fontFamily: FONT, lineHeight: 1 }}
+        >‹</button>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", color: TEXT_DIM, textTransform: "uppercase", fontFamily: FONT, flex: 1, textAlign: "center" }}>
           {monthLabel}
         </div>
-        <div style={{ display: "flex", gap: 12, fontSize: 10, color: TEXT_DIM, fontFamily: FONT }}>
-          <span><span style={{ color: "#22c55e" }}>■</span> Complete</span>
-          <span><span style={{ color: "#eab308" }}>■</span> Partial</span>
-          <span><span style={{ color: "#ef4444" }}>■</span> Skipped</span>
-        </div>
+        <button
+          onClick={nextMonth}
+          style={{ background: "none", border: `1px solid ${BORDER_SUBTLE}`, borderRadius: 6, color: isCurrentMonth ? BORDER_SUBTLE : TEXT_MUTED, fontSize: 16, cursor: isCurrentMonth ? "default" : "pointer", padding: "4px 10px", fontFamily: FONT, lineHeight: 1 }}
+        >›</button>
+      </div>
+      <div style={{ display: "flex", gap: 12, marginTop: 6, fontSize: 10, color: TEXT_DIM, fontFamily: FONT }}>
+        <span><span style={{ color: "#22c55e" }}>■</span> Complete</span>
+        <span><span style={{ color: "#eab308" }}>■</span> Partial</span>
+        <span><span style={{ color: "#ef4444" }}>■</span> Skipped</span>
       </div>
 
       <div style={{ display: "flex", gap: 16, marginTop: 8, fontSize: 10, color: TEXT_DIM, fontFamily: FONT }}>
