@@ -60,6 +60,8 @@ type Action =
   | { type: "COMPLETE_CARDIO_SESSION" }
   | { type: "BACKFILL_STRENGTH"; date: string; dayKey: string; status: "complete" | "partial" | "skipped" | "none" }
   | { type: "BACKFILL_CARDIO"; date: string; slot: "am" | "pm"; duration: number; speed: number; status: "complete" | "not_started" }
+  | { type: "ADD_EXERCISE_TO_SESSION"; exerciseId: string }
+  | { type: "REMOVE_EXERCISE_FROM_SESSION"; exerciseIdx: number }
 
 const now = new Date();
 
@@ -249,6 +251,28 @@ function reducer(state: AppState, action: Action): AppState {
         };
       });
       return { ...state, activeSession: { ...state.activeSession, exercises } };
+    }
+
+    case "ADD_EXERCISE_TO_SESSION": {
+      if (!state.activeSession) return state;
+      const ex = getExerciseById(action.exerciseId);
+      if (!ex) return state;
+      const newExercise: import("../engine/types").ExerciseRecord = {
+        exerciseId: action.exerciseId,
+        name: ex.name,
+        isSessionSwap: false,
+        swappedFromId: null,
+        sets: [{ reps: 10, weight: 0, unit: "lbs" }],
+        completed: false,
+      };
+      const exercises = [...state.activeSession.exercises, newExercise];
+      return { ...state, activeSession: { ...state.activeSession, exercises, summary: computeSummary(exercises) } };
+    }
+
+    case "REMOVE_EXERCISE_FROM_SESSION": {
+      if (!state.activeSession) return state;
+      const exercises = state.activeSession.exercises.filter((_, i) => i !== action.exerciseIdx);
+      return { ...state, activeSession: { ...state.activeSession, exercises, summary: computeSummary(exercises) } };
     }
 
     case "COMPLETE_SESSION": {
