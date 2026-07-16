@@ -64,19 +64,25 @@ export const DEFAULT_PROGRAM: DayTemplate[] = [
     ]
   },
   {
-    key: "tue", label: "TUE", name: "MOBILITY + KB + Z2", scheduled: true,
+    key: "tue", label: "TUE", name: "CORE + GLUTE STABILITY", scheduled: true,
     sections: [
       {
-        id: "tue-s1", name: "Kettlebells", slots: [
-          { id: "tue-s1-1", bodyPart: "Legs",      subTarget: "Glutes",            movementPattern: "Hip Hinge", selectedExerciseId: "ex-033", defaultSets: sets(3, 15, 0, "bw"), restSeconds: R.light },
-          { id: "tue-s1-2", bodyPart: "Shoulders", subTarget: "Shoulder Mobility", movementPattern: "Rotation",  selectedExerciseId: "ex-052", defaultSets: sets(3, 10, 0, "bw"), restSeconds: R.mobility },
-          { id: "tue-s1-3", bodyPart: "Legs",      subTarget: "Quads",             movementPattern: "Squat",     selectedExerciseId: "ex-027", defaultSets: sets(3, 12, 0, "bw"), restSeconds: R.light },
+        id: "tue-s1", name: "Glutes", slots: [
+          { id: "tue-s1-1", bodyPart: "Glutes", subTarget: "Glutes",         movementPattern: "Hip Extension", selectedExerciseId: "ex-062", defaultSets: sets(3, 12, 0, "bw"), restSeconds: R.iso },
+          { id: "tue-s1-2", bodyPart: "Glutes", subTarget: "Hip Abductors",  movementPattern: "Abduction",     selectedExerciseId: "ex-063", defaultSets: sets(2, 15, 0, "bw"), restSeconds: R.iso },
+          { id: "tue-s1-3", bodyPart: "Glutes", subTarget: "Hip Abductors",  movementPattern: "Abduction",     selectedExerciseId: "ex-064", defaultSets: sets(2, 12, 0, "bw"), restSeconds: R.iso },
         ]
       },
       {
-        id: "tue-s2", name: "Mobility", slots: [
-          { id: "tue-s2-1", bodyPart: "Shoulders", subTarget: "Shoulder Mobility", movementPattern: "Rotation", selectedExerciseId: "ex-053", defaultSets: sets(2, 10, 0, "bw"), restSeconds: R.mobility },
-          { id: "tue-s2-2", bodyPart: "Legs",      subTarget: "Hip Mobility",      movementPattern: "Squat",    selectedExerciseId: "ex-054", defaultSets: sets(2, 10, 0, "bw"), restSeconds: R.mobility },
+        id: "tue-s2", name: "Core", slots: [
+          { id: "tue-s2-1", bodyPart: "Core", subTarget: "Core Stability", movementPattern: "Extension", selectedExerciseId: "ex-065", defaultSets: sets(2, 8,  0, "bw"), restSeconds: R.iso },
+          { id: "tue-s2-2", bodyPart: "Core", subTarget: "Core (Transverse)", movementPattern: "Extension", selectedExerciseId: "ex-041", defaultSets: sets(2, 8,  0, "bw"), restSeconds: R.iso },
+          { id: "tue-s2-3", bodyPart: "Core", subTarget: "Core (Transverse)", movementPattern: "Extension", selectedExerciseId: "ex-040", defaultSets: sets(2, 30, 0, "bw"), restSeconds: R.iso },
+        ]
+      },
+      {
+        id: "tue-s3", name: "Balance", slots: [
+          { id: "tue-s3-1", bodyPart: "Balance", subTarget: "Hip Stability", movementPattern: "Balance", selectedExerciseId: "ex-067", defaultSets: sets(2, 20, 0, "bw"), restSeconds: R.mobility },
         ]
       },
     ]
@@ -105,13 +111,24 @@ export const DEFAULT_PROGRAM: DayTemplate[] = [
     ]
   },
   {
-    key: "thu", label: "THU", name: "MOBILITY + RECOVERY", scheduled: true,
+    key: "thu", label: "THU", name: "RECOVERY + HIP STABILITY", scheduled: true,
     sections: [
       {
-        id: "thu-s1", name: "Mobility", slots: [
-          { id: "thu-s1-1", bodyPart: "Shoulders", subTarget: "Shoulder Mobility", movementPattern: "Rotation", selectedExerciseId: "ex-052", defaultSets: sets(3, 10, 0, "bw"), restSeconds: R.mobility },
-          { id: "thu-s1-2", bodyPart: "Legs",      subTarget: "Hip Mobility",      movementPattern: "Squat",   selectedExerciseId: "ex-054", defaultSets: sets(2, 10, 0, "bw"), restSeconds: R.mobility },
-          { id: "thu-s1-3", bodyPart: "Shoulders", subTarget: "Shoulder Mobility", movementPattern: "Rotation", selectedExerciseId: "ex-053", defaultSets: sets(3, 10, 0, "bw"), restSeconds: R.mobility },
+        id: "thu-s1", name: "Hip Stability", slots: [
+          { id: "thu-s1-1", bodyPart: "Glutes", subTarget: "Glutes",        movementPattern: "Hip Extension", selectedExerciseId: "ex-062", defaultSets: sets(2, 12, 0, "bw"), restSeconds: R.iso },
+          { id: "thu-s1-2", bodyPart: "Glutes", subTarget: "Hip Abductors", movementPattern: "Abduction",     selectedExerciseId: "ex-063", defaultSets: sets(2, 12, 0, "bw"), restSeconds: R.iso },
+          { id: "thu-s1-3", bodyPart: "Glutes", subTarget: "Hip Abductors", movementPattern: "Abduction",     selectedExerciseId: "ex-064", defaultSets: sets(2, 10, 0, "bw"), restSeconds: R.iso },
+        ]
+      },
+      {
+        id: "thu-s2", name: "Core Stability", slots: [
+          { id: "thu-s2-1", bodyPart: "Core", subTarget: "Core Stability", movementPattern: "Extension", selectedExerciseId: "ex-065", defaultSets: sets(2, 6,  0, "bw"), restSeconds: R.iso },
+          { id: "thu-s2-2", bodyPart: "Core", subTarget: "Obliques",       movementPattern: "Extension", selectedExerciseId: "ex-066", defaultSets: sets(2, 20, 0, "bw"), restSeconds: R.iso },
+        ]
+      },
+      {
+        id: "thu-s3", name: "Mobility", slots: [
+          { id: "thu-s3-1", bodyPart: "Mobility", subTarget: "Hip Mobility", movementPattern: "Mobility", selectedExerciseId: "ex-068", defaultSets: sets(1, 300, 0, "bw"), restSeconds: R.mobility },
         ]
       },
     ]
@@ -136,8 +153,29 @@ export const DEFAULT_PROGRAM: DayTemplate[] = [
     ]
   },
   {
-    key: "sat", label: "SAT", name: "ACTIVE RECOVERY", scheduled: false,
-    sections: []
+    key: "sat", label: "SAT", name: "CORE + GLUTES", scheduled: true,
+    sections: [
+      {
+        id: "sat-s1", name: "Glutes", slots: [
+          { id: "sat-s1-1", bodyPart: "Glutes", subTarget: "Glutes",        movementPattern: "Hip Extension", selectedExerciseId: "ex-062", defaultSets: sets(3, 15, 0, "bw"), restSeconds: R.iso },
+          { id: "sat-s1-2", bodyPart: "Glutes", subTarget: "Hip Abductors", movementPattern: "Abduction",     selectedExerciseId: "ex-063", defaultSets: sets(2, 15, 0, "bw"), restSeconds: R.iso },
+          { id: "sat-s1-3", bodyPart: "Glutes", subTarget: "Hip Abductors", movementPattern: "Abduction",     selectedExerciseId: "ex-064", defaultSets: sets(2, 12, 0, "bw"), restSeconds: R.iso },
+        ]
+      },
+      {
+        id: "sat-s2", name: "Core", slots: [
+          { id: "sat-s2-1", bodyPart: "Core", subTarget: "Core (Transverse)", movementPattern: "Extension", selectedExerciseId: "ex-041", defaultSets: sets(2, 10, 0, "bw"), restSeconds: R.iso },
+          { id: "sat-s2-2", bodyPart: "Core", subTarget: "Core Stability",    movementPattern: "Extension", selectedExerciseId: "ex-065", defaultSets: sets(2, 8,  0, "bw"), restSeconds: R.iso },
+          { id: "sat-s2-3", bodyPart: "Core", subTarget: "Core (Transverse)", movementPattern: "Extension", selectedExerciseId: "ex-040", defaultSets: sets(2, 30, 0, "bw"), restSeconds: R.iso },
+          { id: "sat-s2-4", bodyPart: "Core", subTarget: "Obliques",          movementPattern: "Extension", selectedExerciseId: "ex-066", defaultSets: sets(2, 20, 0, "bw"), restSeconds: R.iso },
+        ]
+      },
+      {
+        id: "sat-s3", name: "Balance", slots: [
+          { id: "sat-s3-1", bodyPart: "Balance", subTarget: "Hip Stability", movementPattern: "Balance", selectedExerciseId: "ex-067", defaultSets: sets(2, 20, 0, "bw"), restSeconds: R.mobility },
+        ]
+      },
+    ]
   },
   {
     key: "sun", label: "SUN", name: "REST", scheduled: false,

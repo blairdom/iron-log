@@ -75,16 +75,39 @@ export function saveGoals(goals: GoalRecord[]): void {
   save(KEYS.goals, goals);
 }
 
+// Old KB exercise IDs that shipped with TUE/THU before the v2 program update
+const LEGACY_TUE_THU_IDS = new Set(["ex-033", "ex-052", "ex-053", "ex-054", "ex-027"]);
+
+function isLegacyDay(day: DayTemplate): boolean {
+  return day.sections.some(sec =>
+    sec.slots.some(slot => LEGACY_TUE_THU_IDS.has(slot.selectedExerciseId))
+  );
+}
+
+/** Replace outdated TUE/THU/SAT with the new v2 program defaults. */
+export function migrateLegacyProgram(days: DayTemplate[]): DayTemplate[] {
+  return days.map(day => {
+    if ((day.key === "tue" || day.key === "thu") && isLegacyDay(day)) {
+      return DEFAULT_PROGRAM.find(d => d.key === day.key) ?? day;
+    }
+    // Migrate SAT if it was the old unscheduled empty placeholder
+    if (day.key === "sat" && !day.scheduled && day.sections.length === 0) {
+      return DEFAULT_PROGRAM.find(d => d.key === "sat") ?? day;
+    }
+    return day;
+  });
+}
+
 export function loadProgram(): DayTemplate[] {
-  const saved = load<DayTemplate[]>(KEYS.program, DEFAULT_PROGRAM);
+  const raw = load<DayTemplate[]>(KEYS.program, DEFAULT_PROGRAM);
+  const migrated = migrateLegacyProgram(raw);
   // Backfill defaultSets for slots that predate this field
-  return saved.map(day => ({
+  return migrated.map(day => ({
     ...day,
     sections: day.sections.map(sec => ({
       ...sec,
       slots: sec.slots.map(slot => {
         if (slot.defaultSets && slot.defaultSets.length > 0) return slot;
-        // Find matching slot in DEFAULT_PROGRAM to inherit its defaults
         const defaultDay = DEFAULT_PROGRAM.find(d => d.key === day.key);
         const defaultSec = defaultDay?.sections.find(s => s.id === sec.id);
         const defaultSlot = defaultSec?.slots.find(s => s.id === slot.id);

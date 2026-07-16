@@ -8,6 +8,7 @@ import {
   loadProgram, saveProgram,
   loadCardioSessions, saveCardioSessions,
   loadGoals, saveGoals,
+  migrateLegacyProgram,
 } from "./storage";
 import {
   computeBehavioralState, toDateString, getTodayKey, adherenceValue, isScheduledDay,
@@ -748,7 +749,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         type: "HYDRATE",
         sessions: remote.sessions.length > 0 ? remote.sessions : sessions,
         cardioSessions: remote.cardio_sessions.length > 0 ? remote.cardio_sessions : cardioSessions,
-        program: syncAllProgramDefaults(remote.program ?? program, remote.sessions.length > 0 ? remote.sessions : sessions),
+        program: syncAllProgramDefaults(migrateLegacyProgram(remote.program ?? program), remote.sessions.length > 0 ? remote.sessions : sessions),
         adherenceRecords: remote.adherence_records.length > 0 ? remote.adherence_records : adherenceRecords,
       });
     });

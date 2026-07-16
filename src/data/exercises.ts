@@ -84,6 +84,25 @@ export const EXERCISES: Exercise[] = [
   { id: "ex-053", name: "Mace 360 (Light)", bodyPart: "Shoulders", subTarget: "Shoulder Mobility", movementPattern: "Rotation", equipmentRequired: ["Mace"], benchPosition: "N/A", difficulty: "Beginner", type: "Compound" },
   { id: "ex-054", name: "Kettlebell Goblet Squat Hold", bodyPart: "Legs", subTarget: "Hip Mobility", movementPattern: "Squat", equipmentRequired: ["Kettlebells"], benchPosition: "N/A", difficulty: "Beginner", type: "Compound" },
   { id: "ex-055", name: "Dumbbell Pullover", bodyPart: "Back", subTarget: "Lats", movementPattern: "Vertical Pull", equipmentRequired: ["Dumbbells", "Bench"], benchPosition: "Flat", difficulty: "Intermediate", type: "Compound" },
+  // GLUTES / HIP STABILITY
+  { id: "ex-062", name: "Glute Bridge", bodyPart: "Glutes", subTarget: "Glutes", movementPattern: "Hip Extension", equipmentRequired: ["Bodyweight"], benchPosition: "N/A", difficulty: "Beginner", type: "Isolation" },
+  { id: "ex-063", name: "Clamshell", bodyPart: "Glutes", subTarget: "Hip Abductors", movementPattern: "Abduction", equipmentRequired: ["Bodyweight"], benchPosition: "N/A", difficulty: "Beginner", type: "Isolation" },
+  { id: "ex-064", name: "Side-Lying Leg Raise", bodyPart: "Glutes", subTarget: "Hip Abductors", movementPattern: "Abduction", equipmentRequired: ["Bodyweight"], benchPosition: "N/A", difficulty: "Beginner", type: "Isolation" },
+  { id: "ex-065", name: "Bird Dog", bodyPart: "Core", subTarget: "Core Stability", movementPattern: "Extension", equipmentRequired: ["Bodyweight"], benchPosition: "N/A", difficulty: "Beginner", type: "Isolation" },
+  { id: "ex-066", name: "Side Plank", bodyPart: "Core", subTarget: "Obliques", movementPattern: "Extension", equipmentRequired: ["Bodyweight"], benchPosition: "N/A", difficulty: "Beginner", type: "Isolation" },
+  { id: "ex-067", name: "Single-Leg Stand", bodyPart: "Balance", subTarget: "Hip Stability", movementPattern: "Balance", equipmentRequired: ["Bodyweight"], benchPosition: "N/A", difficulty: "Beginner", type: "Isolation" },
+  { id: "ex-068", name: "Gentle Hip Mobility", bodyPart: "Mobility", subTarget: "Hip Mobility", movementPattern: "Mobility", equipmentRequired: ["Bodyweight"], benchPosition: "N/A", difficulty: "Beginner", type: "Isolation" },
+  { id: "ex-069", name: "Single-Leg Glute Bridge", bodyPart: "Glutes", subTarget: "Glutes", movementPattern: "Hip Extension", equipmentRequired: ["Bodyweight"], benchPosition: "N/A", difficulty: "Intermediate", type: "Isolation" },
+  { id: "ex-070", name: "Hip Thrust", bodyPart: "Glutes", subTarget: "Glutes", movementPattern: "Hip Extension", equipmentRequired: ["Bench", "Bodyweight"], benchPosition: "N/A", difficulty: "Beginner", type: "Compound" },
+  { id: "ex-071", name: "Banded Lateral Walk", bodyPart: "Glutes", subTarget: "Hip Abductors", movementPattern: "Abduction", equipmentRequired: ["Resistance Band"], benchPosition: "N/A", difficulty: "Beginner", type: "Isolation" },
+  { id: "ex-072", name: "Monster Walk", bodyPart: "Glutes", subTarget: "Hip Abductors", movementPattern: "Abduction", equipmentRequired: ["Resistance Band"], benchPosition: "N/A", difficulty: "Beginner", type: "Isolation" },
+  { id: "ex-073", name: "Step-Up", bodyPart: "Legs", subTarget: "Quads", movementPattern: "Lunge", equipmentRequired: ["Plyo Box", "Bodyweight"], benchPosition: "N/A", difficulty: "Beginner", type: "Compound" },
+  { id: "ex-074", name: "Reverse Lunge", bodyPart: "Legs", subTarget: "Quads", movementPattern: "Lunge", equipmentRequired: ["Bodyweight"], benchPosition: "N/A", difficulty: "Beginner", type: "Compound" },
+  { id: "ex-075", name: "Standing Hip Abduction", bodyPart: "Glutes", subTarget: "Hip Abductors", movementPattern: "Abduction", equipmentRequired: ["Bodyweight"], benchPosition: "N/A", difficulty: "Beginner", type: "Isolation" },
+  { id: "ex-076", name: "Pallof Press", bodyPart: "Core", subTarget: "Core Anti-Rotation", movementPattern: "Rotation", equipmentRequired: ["Cable Machine", "Resistance Band"], benchPosition: "N/A", difficulty: "Intermediate", type: "Isolation" },
+  { id: "ex-077", name: "Cable Chop", bodyPart: "Core", subTarget: "Obliques", movementPattern: "Rotation", equipmentRequired: ["Cable Machine"], benchPosition: "N/A", difficulty: "Intermediate", type: "Compound" },
+  { id: "ex-078", name: "Ab Wheel Rollout", bodyPart: "Core", subTarget: "Core (Transverse)", movementPattern: "Extension", equipmentRequired: ["Ab Wheel"], benchPosition: "N/A", difficulty: "Intermediate", type: "Isolation" },
+  { id: "ex-079", name: "Suitcase Carry", bodyPart: "Core", subTarget: "Core Stability", movementPattern: "Carry", equipmentRequired: ["Dumbbells"], benchPosition: "N/A", difficulty: "Beginner", type: "Compound" },
 ];
 
 export function getExercisesForSlot(bodyPart: string, movementPattern: string): Exercise[] {

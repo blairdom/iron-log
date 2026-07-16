@@ -149,7 +149,7 @@ export function computeStreak(sessions: SessionRecord[]): number {
 }
 
 export function isScheduledDay(dayKey: string): boolean {
-  return ["mon", "tue", "wed", "thu", "fri"].includes(dayKey);
+  return ["mon", "tue", "wed", "thu", "fri", "sat"].includes(dayKey);
 }
 
 export function dateSubDays(date: string, days: number): string {
