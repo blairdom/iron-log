@@ -745,13 +745,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     fetchRemoteData().then(remote => {
       if (!remote) return; // offline or no server — localStorage already loaded
+      const remoteProgram = remote.program ?? program;
+      const migratedProgram = migrateLegacyProgram(remoteProgram);
+      const programChanged = migratedProgram !== remoteProgram;
+      const finalProgram = syncAllProgramDefaults(migratedProgram, remote.sessions.length > 0 ? remote.sessions : sessions);
       dispatch({
         type: "HYDRATE",
         sessions: remote.sessions.length > 0 ? remote.sessions : sessions,
         cardioSessions: remote.cardio_sessions.length > 0 ? remote.cardio_sessions : cardioSessions,
-        program: syncAllProgramDefaults(migrateLegacyProgram(remote.program ?? program), remote.sessions.length > 0 ? remote.sessions : sessions),
+        program: finalProgram,
         adherenceRecords: remote.adherence_records.length > 0 ? remote.adherence_records : adherenceRecords,
       });
+      // Push migrated program back to Postgres so next load gets the new version
+      if (programChanged) pushProgram(finalProgram);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
