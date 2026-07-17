@@ -476,6 +476,7 @@ function reducer(state: AppState, action: Action): AppState {
     }
 
     case "UPDATE_SLOT_EXERCISE": {
+      const pickedEx = getExerciseById(action.exerciseId);
       const program = state.program.map(day => {
         if (day.key !== action.dayKey) return day;
         return {
@@ -486,7 +487,11 @@ function reducer(state: AppState, action: Action): AppState {
               ...sec,
               slots: sec.slots.map(slot => {
                 if (slot.id !== action.slotId) return slot;
-                return { ...slot, selectedExerciseId: action.exerciseId };
+                return {
+                  ...slot,
+                  selectedExerciseId: action.exerciseId,
+                  ...(pickedEx ? { bodyPart: pickedEx.bodyPart, movementPattern: pickedEx.movementPattern } : {}),
+                };
               }),
             };
           }),
