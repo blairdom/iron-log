@@ -94,6 +94,7 @@ export default function SessionView({ onComplete, onBack }: Props) {
   const [expanded, setExpanded] = useState<number | null>(null);
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [addExFilter, setAddExFilter] = useState("");
+  const [startedExercises, setStartedExercises] = useState<Set<number>>(new Set());
 
   // ── Timer state ────────────────────────────────────────────────────────────
   const [sessionElapsed, setSessionElapsed] = useState(0);
@@ -156,10 +157,10 @@ export default function SessionView({ onComplete, onBack }: Props) {
     const cache: SetCache = { startedAt: Date.now(), exIdx, setIdx };
     _setCache = cache;
     setSetTimer({ exIdx, setIdx, elapsed: 0, running: true });
-    // Do NOT cancel active rest timer — user may want to see it still
+    setStartedExercises(prev => new Set(prev).add(exIdx));
   }
 
-  function stopSetTimer(exIdx: number) {
+  function stopSetTimer(exIdx: number, totalSets: number) {
     _setCache = null;
     setSetTimer(prev => prev ? { ...prev, running: false } : null);
     // Auto-start rest
@@ -167,6 +168,11 @@ export default function SessionView({ onComplete, onBack }: Props) {
     const cache: RestCache = { endsAt: Date.now() + preset * 1000, total: preset, exIdx };
     _restCache = cache;
     setRestTimer({ exIdx, remaining: preset, total: preset, done: false });
+    // Auto-complete exercise if this was the last set
+    const currentSetIdx = setTimer?.setIdx ?? 0;
+    if (currentSetIdx === totalSets - 1) {
+      dispatch({ type: "COMPLETE_EXERCISE", exerciseIdx: exIdx });
+    }
   }
 
   function startRest(exIdx: number) {
@@ -398,10 +404,15 @@ export default function SessionView({ onComplete, onBack }: Props) {
                   {ex.sets.length} sets
                 </div>
                 <button
-                  style={{ ...addBtn, color: isDone ? "#22c55e" : "#555", borderColor: isDone ? "#22c55e" : "#333", borderStyle: "solid" }}
+                  style={{
+                    ...addBtn,
+                    color: isDone ? "#22c55e" : startedExercises.has(absIdx) ? "#eab308" : "#555",
+                    borderColor: isDone ? "#22c55e" : startedExercises.has(absIdx) ? "#3a3210" : "#333",
+                    borderStyle: "solid",
+                  }}
                   onClick={e => { e.stopPropagation(); handleComplete(absIdx); }}
                 >
-                  {isDone ? "DONE" : "SWIPE →"}
+                  {isDone ? "COMPLETE" : startedExercises.has(absIdx) ? "IN PROGRESS" : "START"}
                 </button>
                 {/* Remove exercise */}
                 <button
@@ -446,10 +457,10 @@ export default function SessionView({ onComplete, onBack }: Props) {
                       <div style={{ fontSize: 10, color: "#555", width: 20 }}>{set.weight ? "lbs" : "bw"}</div>
 
                       <button
-                        style={{ padding: "4px 8px", fontSize: 10, fontWeight: 700, fontFamily: FONT, letterSpacing: "0.05em", background: isThisSetRunning ? "rgba(234,179,8,0.15)" : "#111", border: isThisSetRunning ? "1px solid #3a3210" : "1px solid #222", borderRadius: 3, color: isThisSetRunning ? "#eab308" : "#444", cursor: "pointer" }}
-                        onClick={e => { e.stopPropagation(); isThisSetRunning ? stopSetTimer(absIdx) : startSetTimer(absIdx, setIdx); }}
+                        style={{ padding: "4px 12px", fontSize: 10, fontWeight: 700, fontFamily: FONT, letterSpacing: "0.08em", background: isThisSetRunning ? "rgba(234,179,8,0.15)" : "#111", border: isThisSetRunning ? "1px solid #3a3210" : "1px solid #222", borderRadius: 3, color: isThisSetRunning ? "#eab308" : "#444", cursor: "pointer" }}
+                        onClick={e => { e.stopPropagation(); isThisSetRunning ? stopSetTimer(absIdx, ex.sets.length) : startSetTimer(absIdx, setIdx); }}
                       >
-                        {isThisSetRunning ? `■ ${fmt(thisSetElapsed ?? 0)}` : "▶ SET"}
+                        {isThisSetRunning ? "DONE" : "START"}
                       </button>
 
                       {ex.sets.length > 1 && (
