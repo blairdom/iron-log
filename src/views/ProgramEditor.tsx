@@ -149,8 +149,17 @@ export default function ProgramEditor() {
                               dispatch({ type: "UPDATE_SLOT_EXERCISE", dayKey: activeDay, sectionId: section.id, slotId: slot.id, exerciseId: e.target.value });
                             }}
                           >
-                            {compatibleExs.map(ce => (
-                              <option key={ce.id} value={ce.id}>{ce.name}</option>
+                            {Object.entries(
+                              compatibleExs.reduce<Record<string, typeof compatibleExs>>((acc, e) => {
+                                (acc[e.bodyPart] ??= []).push(e);
+                                return acc;
+                              }, {})
+                            ).sort(([a], [b]) => a.localeCompare(b)).map(([bodyPart, exs]) => (
+                              <optgroup key={bodyPart} label={bodyPart}>
+                                {exs.map(ce => (
+                                  <option key={ce.id} value={ce.id}>{ce.name}</option>
+                                ))}
+                              </optgroup>
                             ))}
                           </select>
                         </div>
