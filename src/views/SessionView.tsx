@@ -95,6 +95,8 @@ export default function SessionView({ onComplete, onBack }: Props) {
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [addExFilter, setAddExFilter] = useState("");
   const [startedExercises, setStartedExercises] = useState<Set<number>>(new Set());
+  // tracks "exIdx-setIdx" strings for sets whose timer has been stopped
+  const [doneSets, setDoneSets] = useState<Set<string>>(new Set());
 
   // ── Timer state ────────────────────────────────────────────────────────────
   const [sessionElapsed, setSessionElapsed] = useState(0);
@@ -161,15 +163,17 @@ export default function SessionView({ onComplete, onBack }: Props) {
   }
 
   function stopSetTimer(exIdx: number, totalSets: number) {
+    const currentSetIdx = setTimer?.setIdx ?? 0;
     _setCache = null;
     setSetTimer(prev => prev ? { ...prev, running: false } : null);
+    // Mark this set as done
+    setDoneSets(prev => new Set(prev).add(`${exIdx}-${currentSetIdx}`));
     // Auto-start rest
     const preset = restPresets[exIdx] ?? 90;
     const cache: RestCache = { endsAt: Date.now() + preset * 1000, total: preset, exIdx };
     _restCache = cache;
     setRestTimer({ exIdx, remaining: preset, total: preset, done: false });
     // Auto-complete exercise if this was the last set
-    const currentSetIdx = setTimer?.setIdx ?? 0;
     if (currentSetIdx === totalSets - 1) {
       dispatch({ type: "COMPLETE_EXERCISE", exerciseIdx: exIdx });
     }
@@ -412,7 +416,7 @@ export default function SessionView({ onComplete, onBack }: Props) {
                   }}
                   onClick={e => { e.stopPropagation(); handleComplete(absIdx); }}
                 >
-                  {isDone ? "COMPLETE" : startedExercises.has(absIdx) ? "IN PROGRESS" : "START"}
+                  {isDone ? "DONE" : startedExercises.has(absIdx) ? "IN PROGRESS" : "START"}
                 </button>
                 {/* Remove exercise */}
                 <button
@@ -456,12 +460,17 @@ export default function SessionView({ onComplete, onBack }: Props) {
                         onClick={e => e.stopPropagation()} />
                       <div style={{ fontSize: 10, color: "#555", width: 20 }}>{set.weight ? "lbs" : "bw"}</div>
 
-                      <button
-                        style={{ padding: "4px 12px", fontSize: 10, fontWeight: 700, fontFamily: FONT, letterSpacing: "0.08em", background: isThisSetRunning ? "rgba(234,179,8,0.15)" : "#111", border: isThisSetRunning ? "1px solid #3a3210" : "1px solid #222", borderRadius: 3, color: isThisSetRunning ? "#eab308" : "#444", cursor: "pointer" }}
-                        onClick={e => { e.stopPropagation(); isThisSetRunning ? stopSetTimer(absIdx, ex.sets.length) : startSetTimer(absIdx, setIdx); }}
-                      >
-                        {isThisSetRunning ? "DONE" : "START"}
-                      </button>
+                      {(() => {
+                        const isSetDone = doneSets.has(`${absIdx}-${setIdx}`);
+                        return (
+                          <button
+                            style={{ padding: "4px 12px", fontSize: 10, fontWeight: 700, fontFamily: FONT, letterSpacing: "0.08em", background: isSetDone ? "rgba(34,197,94,0.15)" : isThisSetRunning ? "rgba(234,179,8,0.15)" : "#111", border: isSetDone ? "1px solid #14532d" : isThisSetRunning ? "1px solid #3a3210" : "1px solid #222", borderRadius: 3, color: isSetDone ? "#22c55e" : isThisSetRunning ? "#eab308" : "#444", cursor: isSetDone ? "default" : "pointer" }}
+                            onClick={e => { e.stopPropagation(); if (!isSetDone) { isThisSetRunning ? stopSetTimer(absIdx, ex.sets.length) : startSetTimer(absIdx, setIdx); } }}
+                          >
+                            {isSetDone ? "DONE" : isThisSetRunning ? "IN PROGRESS" : "START"}
+                          </button>
+                        );
+                      })()}
 
                       {ex.sets.length > 1 && (
                         <button style={{ background: "none", border: "none", color: TEXT_DIM, cursor: "pointer", fontSize: 14, padding: "0 4px", fontFamily: FONT, lineHeight: 1 }}
