@@ -119,7 +119,7 @@ function syncAllProgramDefaults(
   sessions: SessionRecord[]
 ): DayTemplate[] {
   // For each scheduled dayKey, find the most recent session with completed exercises
-  const dayKeys = ["mon", "tue", "wed", "thu", "fri"];
+  const dayKeys = program.filter(day => day.scheduled).map(day => day.key);
   let updated = program;
   for (const dayKey of dayKeys) {
     const best = [...sessions]
@@ -138,18 +138,52 @@ function syncProgramDefaults(
 ): DayTemplate[] {
   return program.map(day => {
     if (day.key !== session.dayKey) return day;
+
+    const completedExercises = session.exercises.filter(e => e.completed && e.sets.length > 0);
+    const existingExerciseIds = new Set(
+      day.sections.flatMap(sec => sec.slots.map(slot => slot.selectedExerciseId))
+    );
+    const missingExercises = completedExercises.filter(e => !existingExerciseIds.has(e.exerciseId));
+
+    const sections = day.sections.map(sec => ({
+      ...sec,
+      slots: sec.slots.map(slot => {
+        const ex = completedExercises.find(e => e.exerciseId === slot.selectedExerciseId);
+        if (!ex) return slot;
+        return { ...slot, defaultSets: ex.sets.map(s => ({ ...s })) };
+      }),
+    }));
+
+    // Exercises added during a workout become permanent members of that routine.
+    // Put them at the end of the final section, preserving the order performed.
+    if (missingExercises.length > 0) {
+      const targetSectionIndex = sections.length - 1;
+      if (targetSectionIndex >= 0) {
+        const targetSection = sections[targetSectionIndex];
+        sections[targetSectionIndex] = {
+          ...targetSection,
+          slots: [
+            ...targetSection.slots,
+            ...missingExercises.map((record, index) => {
+              const exercise = getExerciseById(record.exerciseId);
+              return {
+                id: `${day.key}-persisted-${record.exerciseId}-${index}`,
+                bodyPart: exercise?.bodyPart ?? "Other",
+                subTarget: exercise?.subTarget ?? "Other",
+                movementPattern: exercise?.movementPattern ?? "Other",
+                selectedExerciseId: record.exerciseId,
+                defaultSets: record.sets.map(set => ({ ...set })),
+                restSeconds: 60,
+              };
+            }),
+          ],
+        };
+      }
+    }
+
     return {
       ...day,
-      sections: day.sections.map(sec => ({
-        ...sec,
-        slots: sec.slots.map(slot => {
-          const ex = session.exercises.find(
-            e => e.exerciseId === slot.selectedExerciseId && e.completed && e.sets.length > 0
-          );
-          if (!ex) return slot;
-          return { ...slot, defaultSets: ex.sets.map(s => ({ ...s })) };
-        }),
-      })),
+      sections,
     };
   });
 }
@@ -752,8 +786,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (!remote) return; // offline or no server — localStorage already loaded
       const remoteProgram = remote.program ?? program;
       const migratedProgram = migrateLegacyProgram(remoteProgram);
-      const programChanged = migratedProgram !== remoteProgram;
       const finalProgram = syncAllProgramDefaults(migratedProgram, remote.sessions.length > 0 ? remote.sessions : sessions);
+      const programChanged = JSON.stringify(finalProgram) !== JSON.stringify(remoteProgram);
       dispatch({
         type: "HYDRATE",
         sessions: remote.sessions.length > 0 ? remote.sessions : sessions,
@@ -761,7 +795,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         program: finalProgram,
         adherenceRecords: remote.adherence_records.length > 0 ? remote.adherence_records : adherenceRecords,
       });
-      // Push migrated program back to Postgres so next load gets the new version
+      // Persist migrations and workout-added exercises/defaults back to Postgres.
       if (programChanged) pushProgram(finalProgram);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps

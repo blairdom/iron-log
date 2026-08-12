@@ -104,6 +104,7 @@ export const EXERCISES: Exercise[] = [
   { id: "ex-078", name: "Ab Wheel Rollout", bodyPart: "Core", subTarget: "Core (Transverse)", movementPattern: "Extension", equipmentRequired: ["Ab Wheel"], benchPosition: "N/A", difficulty: "Intermediate", type: "Isolation" },
   { id: "ex-079", name: "Suitcase Carry", bodyPart: "Core", subTarget: "Core Stability", movementPattern: "Carry", equipmentRequired: ["Dumbbells"], benchPosition: "N/A", difficulty: "Beginner", type: "Compound" },
   { id: "ex-080", name: "Dumbbell Shrug", bodyPart: "Traps", subTarget: "Upper Trapezius", movementPattern: "Elevation", equipmentRequired: ["Dumbbells"], benchPosition: "N/A", difficulty: "Beginner", type: "Isolation" },
+  { id: "ex-081", name: "Dumbbell Face Pull", bodyPart: "Shoulders", subTarget: "Rear Delts / External Rotators", movementPattern: "Horizontal Pull", equipmentRequired: ["Dumbbells", "Bench"], benchPosition: "Incline", difficulty: "Intermediate", type: "Isolation" },
 ];
 
 export function getExercisesForSlot(bodyPart: string, movementPattern: string): Exercise[] {
