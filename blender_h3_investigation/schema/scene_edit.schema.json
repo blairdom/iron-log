@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "h3d.scene_edit/0.1",
+  "title": "H3 Director scene edit (PROPOSED v0.1, not implemented)",
+  "description": "Model-facing edit envelope. Qwen fills only enums, scene IDs drawn from the current snapshot, and bounded parameters. All geometry is solved in Blender. IDs are validated against the snapshot at runtime (dynamic enum injection into the decoding grammar).",
+  "oneOf": [
+    { "$ref": "#/$defs/edit_envelope" },
+    { "$ref": "#/$defs/clarify" }
+  ],
+  "$defs": {
+    "scene_id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$", "description": "Must exist in snapshot; injected as enum at decode time." },
+    "beat_id": { "type": "string", "pattern": "^B[0-9]{1,3}$" },
+    "direction": { "enum": ["raise", "lower", "increase", "decrease", "forward", "back", "left", "right", "wider", "narrower"] },
+    "easing": { "enum": ["linear", "ease_in", "ease_out", "ease_in_out", "hold"] },
+    "solve_for": { "enum": ["contact_feasible", "rom_comfortable", "none"] },
+
+    "clarify": {
+      "type": "object",
+      "required": ["kind", "question", "options"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "const": "clarify" },
+        "question": { "type": "string", "maxLength": 200 },
+        "options": { "type": "array", "minItems": 2, "maxItems": 4, "items": { "type": "string", "maxLength": 80 } }
+      }
+    },
+
+    "edit_envelope": {
+      "type": "object",
+      "required": ["schema", "base_version", "edits", "preserve"],
+      "additionalProperties": false,
+      "properties": {
+        "schema": { "const": "h3d.scene_edit/0.1" },
+        "base_version": { "type": "string", "pattern": "^v[0-9]{3}$" },
+        "edits": { "type": "array", "minItems": 1, "maxItems": 8, "items": { "$ref": "#/$defs/op" } },
+        "preserve": { "type": "array", "items": { "type": "string", "maxLength": 80 }, "description": "Path globs that must hash-identical after execution; locks are enforced regardless." },
+        "rationale": { "type": "string", "maxLength": 300, "description": "Logged only. Never executed or parsed." }
+      }
+    },
+
+    "op": {
+      "oneOf": [
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["op", "target", "prop", "value"],
+          "properties": {
+            "op": { "const": "set_object_prop" },
+            "target": { "$ref": "#/$defs/scene_id" },
+            "prop": { "enum": ["height", "angle", "abduction", "backrest_angle", "visible"] },
+            "value": { "type": "number", "description": "Unit and range come from the object's affordance registry; out-of-range is rejected." }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["op", "target", "prop", "direction"],
+          "properties": {
+            "op": { "const": "adjust_object_prop" },
+            "target": { "$ref": "#/$defs/scene_id" },
+            "prop": { "enum": ["height", "angle", "abduction", "backrest_angle"] },
+            "direction": { "$ref": "#/$defs/direction" },
+            "amount": { "enum": ["slight", "moderate", "large"] },
+            "solve_for": { "$ref": "#/$defs/solve_for" }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["op", "character", "pose", "beat"],
+          "properties": {
+            "op": { "const": "apply_pose" },
+            "character": { "$ref": "#/$defs/scene_id" },
+            "pose": { "enum": ["stand_neutral", "sit_edge", "sit_upright", "recline_supported", "lithotomy_low", "lithotomy_standard", "hands_on_table_edge", "hands_rest_abdomen"] },
+            "beat": { "$ref": "#/$defs/beat_id" }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["op", "landmark", "affordance", "beats"],
+          "properties": {
+            "op": { "const": "place_contact" },
+            "landmark": { "enum": ["heel_l", "heel_r", "toe_l", "toe_r", "hand_l", "hand_r", "pelvis_seat", "upper_back"] },
+            "affordance": { "$ref": "#/$defs/scene_id" },
+            "beats": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/beat_id" } },
+            "tolerance_mm": { "type": "integer", "minimum": 2, "maximum": 30 }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["op", "beat", "action", "after"],
+          "properties": {
+            "op": { "const": "add_motion_beat" },
+            "beat": { "$ref": "#/$defs/beat_id" },
+            "action": { "enum": ["settle", "slide_back", "recline", "lift_leg_l", "lift_leg_r", "place_feet", "weight_shift", "hold"] },
+            "after": { "$ref": "#/$defs/beat_id" },
+            "duration_frames": { "type": "integer", "minimum": 6, "maximum": 120 },
+            "easing": { "$ref": "#/$defs/easing" }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["op", "beat"],
+          "properties": {
+            "op": { "const": "retime_beat" },
+            "beat": { "$ref": "#/$defs/beat_id" },
+            "change": { "enum": ["faster", "slower", "earlier", "later"] },
+            "amount": { "enum": ["slight", "moderate", "large"] },
+            "easing": { "$ref": "#/$defs/easing" }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["op", "camera", "shot"],
+          "properties": {
+            "op": { "const": "camera_set_shot" },
+            "camera": { "$ref": "#/$defs/scene_id" },
+            "shot": { "enum": ["wide", "medium_wide", "medium", "three_quarter_foot_end", "side_profile", "head_end"] }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["op", "camera", "move"],
+          "properties": {
+            "op": { "const": "camera_move" },
+            "camera": { "$ref": "#/$defs/scene_id" },
+            "move": { "enum": ["static", "push_in", "pull_out", "pan_left", "pan_right", "pedestal_up", "pedestal_down", "arc_left", "arc_right"] },
+            "beats": { "type": "array", "items": { "$ref": "#/$defs/beat_id" } },
+            "amplitude": { "enum": ["small", "medium", "large"] },
+            "speed": { "enum": ["slow", "normal", "fast"] }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["op", "path"],
+          "properties": {
+            "op": { "enum": ["lock", "unlock_request"] },
+            "path": { "type": "string", "maxLength": 80 }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["op"],
+          "properties": {
+            "op": { "const": "render_preview" },
+            "passes": { "type": "array", "items": { "enum": ["beauty", "depth", "pose"] } }
+          }
+        }
+      ]
+    }
+  }
+}
